@@ -1,0 +1,12 @@
+menuconfig MODULES_ESO_ATT_CONTROL
+	bool "eso_att_control"
+	default n
+	---help---
+		Enable support for eso_att_control
+
+menuconfig USER_ESO_ATT_CONTROL
+	bool "eso_att_control running as userspace module"
+	default n
+	depends on BOARD_PROTECTED && MODULES_ESO_ATT_CONTROL
+	---help---
+		Put eso_att_control in userspace memory

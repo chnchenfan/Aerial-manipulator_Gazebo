@@ -148,6 +148,8 @@ set(models
 	cloudship
 	glider
 	if750a
+	uam_v5
+	uav_arm_v4
 	iris
 	iris_ctrlalloc
 	iris_dual_gps

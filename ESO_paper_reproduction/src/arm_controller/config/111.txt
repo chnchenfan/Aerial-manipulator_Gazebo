@@ -1,0 +1,65 @@
+# 关节状态发布器 (必须保留)
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 100
+
+# 肩部关节 (Arm Joint 1)
+arm_joint1_position_controller:
+  type: effort_controllers/JointPositionController
+  joint: arm_joint1
+  pid:
+    p: 10.0
+    i: 0.01
+    d: 1.0
+    i_clamp_min: -1.0
+    i_clamp_max: 1.0
+
+# 大臂关节 (Arm Joint 2)
+arm_joint2_position_controller:
+  type: effort_controllers/JointPositionController
+  joint: arm_joint2
+  pid:
+    p: 10.0
+    i: 0.01
+    d: 1.0
+    i_clamp_min: -1.0
+    i_clamp_max: 1.0
+
+# 小臂关节 (Arm Joint 3)
+# P从45降到5，越往末端力矩应该越小
+arm_joint3_position_controller:
+  type: effort_controllers/JointPositionController
+  joint: arm_joint3
+  pid:
+    p: 5.0
+    i: 0.01
+    d: 0.5
+    i_clamp_min: -0.5
+    i_clamp_max: 0.5
+
+# 手腕关节 (Arm Joint 4)
+# P从35降到2，这里惯性最小，必须很温柔
+arm_joint4_position_controller:
+  type: effort_controllers/JointPositionController
+  joint: arm_joint4
+  pid:
+    p: 2.0
+    i: 0.01
+    d: 0.1
+    i_clamp_min: -0.2
+    i_clamp_max: 0.2
+
+# 夹爪关节 (Gripper)
+# P从20降到1，防止夹东西时把东西弹飞
+left_gripper_joint_position_controller:
+  type: effort_controllers/JointPositionController
+  joint: left_gripper_joint
+  pid:
+    p: 1.0
+    i: 0.01
+    d: 0.1
+    i_clamp_min: -0.1
+    i_clamp_max: 0.1
+  command_limits:
+    min: -0.4
+    max: 0.4

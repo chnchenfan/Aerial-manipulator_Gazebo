@@ -1,0 +1,13 @@
+menuconfig MODULES_ARM_JOINT_BRIDGE
+	bool "arm_joint_bridge"
+	default n
+	depends on MODULES_MAVLINK
+	---help---
+		Enable support for arm_joint_bridge
+
+menuconfig USER_ARM_JOINT_BRIDGE
+	bool "arm_joint_bridge running as userspace module"
+	default n
+	depends on BOARD_PROTECTED && MODULES_ARM_JOINT_BRIDGE
+	---help---
+		Put arm_joint_bridge in userspace memory

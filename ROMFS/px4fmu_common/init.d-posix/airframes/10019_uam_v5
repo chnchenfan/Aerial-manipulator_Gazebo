@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# @name uam_v5 SITL
+#
+# @type Quadrotor with Arm
+#
+# @class Copter
+#
+# @maintainer cf <chenfan.chn@outlook.com>
+#
+
+if [ $AUTOCNF = yes ]; then
+	param set MAV_TYPE 2
+	param set ESO_ARM_MODEL 1
+fi
+
+. ${R}etc/init.d/rc.mc_defaults
+
+set MIXER quad_w
+set MODEL uam_v5
+
+mc_rate_control stop
+mc_att_control stop
+mc_pos_control stop
+
+eso_att_control start
+eso_rate_control start
+eso_pos_control start
+arm_joint_bridge start

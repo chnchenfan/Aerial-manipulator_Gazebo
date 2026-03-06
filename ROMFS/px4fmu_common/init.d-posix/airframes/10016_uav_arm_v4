@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# @name 串联机械臂四旋翼 SITL
+#         用于仿真带串联机械臂的四旋翼平台
+#
+# @type Quadrotor with Serial Manipulator
+#         四旋翼飞行器，搭载串联型机械臂
+#
+# @class Copter
+#
+# @maintainer cf <chenfan.chn@outlook.com>
+#             维护者：cf
+#
+
+# -------------------------------------------------------------------------
+# 1. 参数配置 (AUTOCNF)
+#    当重置参数或首次启动时，会应用这些设置
+# -------------------------------------------------------------------------
+if [ $AUTOCNF = yes ]; then
+    # 强制设置为四旋翼 (MAV_TYPE = 2)
+    param set MAV_TYPE 2
+    param set ESO_ARM_MODEL 0
+
+    # [可选] 在这里可以预设你的 ESO 模块参数默认值
+    # param set ESO_ATT_BW 30.0
+    # param set ESO_ATT_P 6.0
+fi
+
+# -------------------------------------------------------------------------
+# 2. 加载默认配置
+#    这一行非常重要！它会启动 GPS、EKF2、Commander 以及 **默认控制器**
+# -------------------------------------------------------------------------
+. ${R}etc/init.d/rc.mc_defaults
+
+# -------------------------------------------------------------------------
+# 3. 物理模型与混控设置
+# -------------------------------------------------------------------------
+# 设置混控器为宽X模式 (保留，除非你有自定义混控)
+set MIXER quad_w
+
+# 设置仿真模型名称
+# (这样 SITL 会去 Tools/sitl_gazebo/models/ 下加载 uav_arm_v4.sdf)
+set MODEL uav_arm_v4
+
+# -------------------------------------------------------------------------
+# 4. 【核心修改】控制器热切换 (Controller Switching)
+#    原理：rc.mc_defaults 默认启动了官方的 mc_att_control 和 mc_rate_control。
+#    我们需要先“杀掉”它们，再启动我们自己的，防止抢夺控制权。
+# -------------------------------------------------------------------------
+
+# 第一步：停止官方默认的姿态环和角速度环
+mc_rate_control stop
+mc_att_control stop
+mc_pos_control stop
+# 第二步：启动自定义的 ESO 姿态控制器
+# (该模块已在 default.px4board 中注册，并编译进固件)
+eso_att_control start
+eso_rate_control start
+eso_pos_control start

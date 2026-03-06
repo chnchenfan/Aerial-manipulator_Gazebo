@@ -50,6 +50,7 @@ set(msg_files
 	airspeed.msg
 	airspeed_validated.msg
 	airspeed_wind.msg
+	arm_joint_states.msg
 	autotune_attitude_control_status.msg
 	battery_status.msg
 	button_event.msg
@@ -194,6 +195,7 @@ set(msg_files
 	vehicle_magnetometer.msg
 	vehicle_odometry.msg
 	vehicle_rates_setpoint.msg
+	eso_rate_aux.msg
 	vehicle_roi.msg
 	vehicle_status.msg
 	vehicle_status_flags.msg

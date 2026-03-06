@@ -1,0 +1,219 @@
+<?xml version="1.0"?>
+<robot name="uav_arm_v4" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="mesh_path" value="package://uav_arm_model/meshes" />
+
+  <xacro:macro name="inertial_matrix" params="mass ixx ixy ixz iyy iyz izz pose">
+    <inertial>
+      <origin xyz="${pose}" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="effort_transmission" params="joint_name">
+    <transmission name="${joint_name}_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${joint_name}">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${joint_name}_motor">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  </xacro:macro>
+
+  <link name="base_link">
+    <xacro:inertial_matrix mass="0.844401"
+      ixx="0.0228437" ixy="0" ixz="4.86e-06"
+      iyy="0.0228546" iyz="0" izz="0.0413503"
+      pose="0.000642 0 0.193246"/>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/base_link.STL" scale="1 1 1"/>
+      </geometry>
+      <material name="dark_grey">
+        <color rgba="0.2 0.2 0.2 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/base_link.STL" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="imu_link">
+    <inertial>
+      <mass value="0.015"/>
+      <inertia ixx="1e-05" ixy="0" ixz="0" iyy="1e-05" iyz="0" izz="1e-05"/>
+    </inertial>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="arm_link1">
+    <xacro:inertial_matrix mass="0.250494"
+      ixx="0.005" ixy="0" ixz="0"
+      iyy="0.005" iyz="0" izz="0.005"
+      pose="0 0 0.043715"/>
+    <visual>
+      <geometry><mesh filename="${mesh_path}/arm_link1.STL"/></geometry>
+      <material name="orange"><color rgba="1 0.5 0 1"/></material>
+    </visual>
+    <collision>
+      <geometry><mesh filename="${mesh_path}/arm_link1.STL"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="arm_joint1" type="revolute">
+    <parent link="base_link"/>
+    <child link="arm_link1"/>
+    <origin xyz="0 0 0.1745" rpy="3.14159 0 3.14159"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="5.0" velocity="3.0"/>
+    <dynamics damping="0.05" friction="0.0"/>
+  </joint>
+
+  <link name="arm_link2">
+    <xacro:inertial_matrix mass="0.020149"
+      ixx="0.005" ixy="0" ixz="0"
+      iyy="0.005" iyz="0" izz="0.005"
+      pose="0.04063 0.011621 0"/>
+    <visual>
+      <geometry><mesh filename="${mesh_path}/arm_link2.STL"/></geometry>
+    </visual>
+    <collision>
+      <geometry><mesh filename="${mesh_path}/arm_link2.STL"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="arm_joint2" type="revolute">
+    <parent link="arm_link1"/>
+    <child link="arm_link2"/>
+    <origin xyz="0 0 0.132" rpy="1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="5.0" velocity="3.0"/>
+    <dynamics damping="0.05" friction="0.0"/>
+  </joint>
+
+  <link name="arm_link3">
+    <xacro:inertial_matrix mass="0.0397105"
+      ixx="0.003" ixy="0" ixz="0"
+      iyy="0.003" iyz="0" izz="0.003"
+      pose="0.025422 -0.007271 0"/>
+    <visual>
+      <geometry><mesh filename="${mesh_path}/arm_link3.STL"/></geometry>
+    </visual>
+    <collision>
+      <geometry><mesh filename="${mesh_path}/arm_link3.STL"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="arm_joint3" type="revolute">
+    <parent link="arm_link2"/>
+    <child link="arm_link3"/>
+    <origin xyz="0.09614 0.0275 0" rpy="0 0 0.27859"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="5.0" velocity="3.0"/>
+    <dynamics damping="0.05" friction="0.0"/>
+  </joint>
+
+  <link name="arm_link4">
+    <xacro:inertial_matrix mass="0.0631624"
+      ixx="0.003" ixy="0" ixz="0"
+      iyy="0.003" iyz="0" izz="0.003"
+      pose="0.030336 6.3e-05 -5.3e-05"/>
+    <visual>
+      <geometry><mesh filename="${mesh_path}/arm_link4.STL"/></geometry>
+    </visual>
+    <collision>
+      <geometry><mesh filename="${mesh_path}/arm_link4.STL"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="arm_joint4" type="revolute">
+    <parent link="arm_link3"/>
+    <child link="arm_link4"/>
+    <origin xyz="0.08509 -0.02434 0" rpy="-1.5708 0 -0.27859"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="5.0" velocity="3.0"/>
+    <dynamics damping="0.05" friction="0.0"/>
+  </joint>
+
+  <link name="left_gripper_link">
+    <xacro:inertial_matrix mass="0.00824355"
+      ixx="0.001" ixy="0" ixz="0"
+      iyy="0.001" iyz="0" izz="0.001"
+      pose="0.032507 0.009008 -0.01525"/>
+    <visual>
+      <geometry><mesh filename="${mesh_path}/left_gripper_link.STL"/></geometry>
+      <material name="red"><color rgba="1 0 0 1"/></material>
+    </visual>
+    <collision>
+      <geometry><mesh filename="${mesh_path}/left_gripper_link.STL"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="left_gripper_joint" type="revolute">
+    <parent link="arm_link4"/>
+    <child link="left_gripper_link"/>
+    <origin xyz="0.07775 -0.00581 -0.0175" rpy="3.14159 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="0.0" upper="0.6" effort="5.0" velocity="1.0"/>
+    <dynamics damping="0.7" friction="0.1"/>
+  </joint>
+
+  <link name="right_gripper_link">
+    <xacro:inertial_matrix mass="0.0079394"
+      ixx="0.001" ixy="0" ixz="0"
+      iyy="0.001" iyz="0" izz="0.001"
+      pose="0.032835 -0.008766 -0.015125"/>
+    <visual>
+      <geometry><mesh filename="${mesh_path}/right_gripper_link.STL"/></geometry>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <geometry><mesh filename="${mesh_path}/right_gripper_link.STL"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="right_gripper_joint" type="revolute">
+    <parent link="arm_link4"/>
+    <child link="right_gripper_link"/>
+    <origin xyz="0.07775 0.00594 -0.01738" rpy="3.14159 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="0.0" upper="0.6" effort="5.0" velocity="1.0"/>
+    <dynamics damping="0.7" friction="0.1"/>
+    <mimic joint="left_gripper_joint" multiplier="-1" offset="0"/>
+  </joint>
+
+
+  <xacro:effort_transmission joint_name="arm_joint1"/>
+  <xacro:effort_transmission joint_name="arm_joint2"/>
+  <xacro:effort_transmission joint_name="arm_joint3"/>
+  <xacro:effort_transmission joint_name="arm_joint4"/>
+  <xacro:effort_transmission joint_name="left_gripper_joint"/>
+
+  <gazebo>
+    <plugin name="ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/uav_arm</robotNamespace>
+      <robotParam>/robot_description</robotParam>
+      <controlPeriod>0.004</controlPeriod>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="arm_link1"><material>Gazebo/Orange</material></gazebo>
+  <gazebo reference="arm_link2"><material>Gazebo/Orange</material></gazebo>
+  <gazebo reference="arm_link3"><material>Gazebo/Orange</material></gazebo>
+  <gazebo reference="arm_link4"><material>Gazebo/Orange</material></gazebo>
+  <gazebo reference="left_gripper_link"><material>Gazebo/RedBright</material></gazebo>
+  <gazebo reference="right_gripper_link"><material>Gazebo/RedBright</material></gazebo>
+
+</robot>

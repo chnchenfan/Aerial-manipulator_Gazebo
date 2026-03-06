@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>uav_arm_model</name>
+  <version>0.1.0</version>
+  <description>保存 uav_arm 模型（SDF/URDF/xacro 等）的资源包。</description>
+
+  <maintainer email="chenfan.chn@outlook.com">cf</maintainer>
+  <author email="chenfan.chn@outlook.com">cf</author>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export/>
+</package>

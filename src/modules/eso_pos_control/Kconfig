@@ -1,0 +1,12 @@
+menuconfig MODULES_ESO_POS_CONTROL
+	bool "eso_pos_control"
+	default n
+	---help---
+		Enable support for eso_pos_control
+
+menuconfig USER_ESO_POS_CONTROL
+	bool "eso_pos_control running as userspace module"
+	default y
+	depends on BOARD_PROTECTED && MODULES_ESO_POS_CONTROL
+	---help---
+		Put eso_pos_control in userspace memory

@@ -1,0 +1,12 @@
+menuconfig MODULES_ESO_RATE_CONTROL
+	bool "eso_rate_control"
+	default n
+	---help---
+		Enable support for eso_rate_control
+
+menuconfig USER_ESO_RATE_CONTROL
+	bool "eso_rate_control running as userspace module"
+	default n
+	depends on BOARD_PROTECTED && MODULES_ESO_RATE_CONTROL
+	---help---
+		Put eso_rate_control in userspace memory

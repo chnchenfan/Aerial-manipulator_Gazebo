@@ -56,27 +56,30 @@ then
 	control_allocator start
 fi
 
-#
-# Start Multicopter Rate Controller.
-#
-mc_rate_control start
-
-#
-# Start Multicopter Attitude Controller.
-#
-mc_att_control start
-
-if param greater -s MC_AT_EN 0
+if ! param compare SYS_AUTOSTART 10016 && ! param compare SYS_AUTOSTART 10019
 then
-	mc_autotune_attitude_control start
-fi
+	#
+	# Start Multicopter Rate Controller.
+	#
+	mc_rate_control start
 
-#
-# Start Multicopter Position Controller.
-#
-mc_hover_thrust_estimator start
-flight_mode_manager start
-mc_pos_control start
+	#
+	# Start Multicopter Attitude Controller.
+	#
+	mc_att_control start
+
+	if param greater -s MC_AT_EN 0
+	then
+		mc_autotune_attitude_control start
+	fi
+
+	#
+	# Start Multicopter Position Controller.
+	#
+	mc_hover_thrust_estimator start
+	flight_mode_manager start
+	mc_pos_control start
+fi
 
 #
 # Start Multicopter Land Detector.
