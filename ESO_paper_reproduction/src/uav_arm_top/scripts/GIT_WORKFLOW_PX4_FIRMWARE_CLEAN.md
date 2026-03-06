@@ -561,3 +561,120 @@ git add <文件>
 git commit -m "..."
 git push -u private feat/<功能名>
 ```
+
+## 12. 这个仓库里的 `sitl_gazebo` 子模块怎么处理
+
+这个仓库里有一个关键子模块：
+
+```bash
+Tools/sitl_gazebo
+```
+
+它现在已经不是官方 `PX4-SITL_gazebo`，而是你自己的私有仓库：
+
+```bash
+ssh://git@ssh.github.com:443/chnchenfan/px4-sitl-gazebo-custom.git
+```
+
+原因是：
+
+- `uav_arm_v4` 和 `uam_v5` 的 Gazebo 模型在这个子模块里
+- 包括：
+  - `Tools/sitl_gazebo/models/uav_arm_v4`
+  - `Tools/sitl_gazebo/models/uam_v5`
+- 如果还指向官方子模块，新机器拉代码时拿不到这两个模型
+
+### 12.1 新机器应该怎么克隆
+
+最稳妥的方式：
+
+```bash
+git clone --recursive git@github.com:chnchenfan/px4-uam-v5-eso.git
+```
+
+如果已经 clone 了主仓库，但还没有拉子模块：
+
+```bash
+cd /home/cf/PX4_Firmware_clean
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
+### 12.2 怎么看子模块是不是正常
+
+在主仓库里看：
+
+```bash
+cd /home/cf/PX4_Firmware_clean
+git submodule status
+```
+
+只看 `sitl_gazebo`：
+
+```bash
+git submodule status Tools/sitl_gazebo
+```
+
+进入子模块看当前分支和状态：
+
+```bash
+git -C /home/cf/PX4_Firmware_clean/Tools/sitl_gazebo status
+git -C /home/cf/PX4_Firmware_clean/Tools/sitl_gazebo branch -vv
+git -C /home/cf/PX4_Firmware_clean/Tools/sitl_gazebo remote -v
+```
+
+### 12.3 以后如果你改了 Gazebo 模型，正确提交流程是什么
+
+`Tools/sitl_gazebo` 不是普通目录，所以不能只在主仓库里提交一次。
+
+正确顺序是：
+
+1. 先在子模块里提交
+
+```bash
+cd /home/cf/PX4_Firmware_clean/Tools/sitl_gazebo
+git status
+git add <模型文件>
+git commit -m "..."
+git push
+```
+
+2. 再回到主仓库，提交新的子模块指针
+
+```bash
+cd /home/cf/PX4_Firmware_clean
+git add Tools/sitl_gazebo
+git commit -m "Update sitl_gazebo submodule"
+git push
+```
+
+### 12.4 怎么判断自己是不是忘了提交子模块
+
+如果你在主仓库 `git status` 里看到类似：
+
+```bash
+M Tools/sitl_gazebo
+```
+
+说明：
+
+- 子模块的 commit 已经变了
+- 但主仓库还没提交新的子模块指针
+
+如果你在子模块目录里看到：
+
+```bash
+?? models/...
+ M ...
+```
+
+说明：
+
+- 你连子模块自己的提交都还没做
+
+### 12.5 当前这套工程里和子模块有关的关键仓库
+
+- 主仓库：
+  - `git@github.com:chnchenfan/px4-uam-v5-eso.git`
+- `sitl_gazebo` 子模块仓库：
+  - `git@github.com:chnchenfan/px4-sitl-gazebo-custom.git`
