@@ -45,6 +45,7 @@
         "files.watcherExclude": {
                 "**/build/**": true
         },
+        "git.detectSubmodules": false,
         "git.detectSubmodulesLimit": 20,
         "git.ignoreLimitWarning": true,
         "githubPullRequests.defaultMergeMethod": "squash",
@@ -136,5 +137,6 @@
         "yaml.schemas": {
                 "${workspaceFolder}/validation/module_schema.yaml": "${workspaceFolder}/src/modules/*/module.yaml"
         },
-        "cortex-debug.openocdPath": "${env:PICO_SDK_PATH}/../openocd/src/openocd"       // Added for rp2040
+        "cortex-debug.openocdPath": "${env:PICO_SDK_PATH}/../openocd/src/openocd",
+        "ROS2.distro": "noetic" // Added for rp2040
 }
