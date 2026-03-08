@@ -227,6 +227,9 @@ param show ESO_ARM_MODEL
 eso_att_control status
 eso_rate_control status
 eso_pos_control status
+mc_att_control status
+mc_rate_control status
+mc_pos_control status
 arm_joint_bridge status
 listener arm_joint_states
 ```
