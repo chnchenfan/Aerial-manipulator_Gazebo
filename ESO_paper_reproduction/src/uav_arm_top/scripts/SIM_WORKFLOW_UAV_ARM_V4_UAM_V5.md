@@ -87,12 +87,35 @@ cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
 catkin_make
 ```
 
-每开一个新终端都建议执行：
+### 3.3 每个新终端的推荐环境准备
+
+先在仓库根目录生成一次 SITL 构建目录：
 
 ```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-source devel/setup.bash
+cd /home/cf/PX4_Firmware_clean
+DONT_RUN=1 make px4_sitl_default gazebo
 ```
+
+之后每开一个新终端，直接执行：
+
+```bash
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
+```
+
+这个脚本会自动完成：
+
+- `source ESO_paper_reproduction/devel/setup.bash`
+- `source Tools/setup_gazebo.bash`
+- 补全 `ROS_PACKAGE_PATH`
+
+建议先验证：
+
+```bash
+rospack find uav_arm_top
+rospack find mavlink_sitl_gazebo
+```
+
+如果这两个都能找到，再执行 `roslaunch` / `rosrun`。
 
 ## 4. `uav_arm_v4` 仿真启动
 
@@ -101,8 +124,7 @@ source devel/setup.bash
 终端 1：
 
 ```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-source devel/setup.bash
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
 roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch
 ```
 
@@ -118,8 +140,7 @@ roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch
 终端 2：
 
 ```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-source devel/setup.bash
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
 rosrun uav_arm_top eso_offboard_node
 ```
 
@@ -135,8 +156,7 @@ rosrun uav_arm_top eso_circle_offboard_node
 终端 3：
 
 ```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-source devel/setup.bash
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
 rosrun arm_controller joint_position_commander.py
 ```
 
@@ -147,8 +167,7 @@ rosrun arm_controller joint_position_commander.py
 终端 1：
 
 ```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-source devel/setup.bash
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
 roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
 ```
 
@@ -165,8 +184,7 @@ roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
 终端 2：
 
 ```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-source devel/setup.bash
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
 rosrun uav_arm_top eso_offboard_2_5_node
 ```
 
@@ -178,6 +196,7 @@ rosrun uav_arm_top eso_offboard_2_5_node
 如果只想做固定点悬停，也可以运行：
 
 ```bash
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
 rosrun uav_arm_top eso_offboard_node
 ```
 
@@ -186,14 +205,14 @@ rosrun uav_arm_top eso_offboard_node
 终端 3：
 
 ```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-source devel/setup.bash
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
 rosrun arm_controller joint_position_commander_uam_v5.py
 ```
 
 固定零位并记录日志：
 
 ```bash
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
 rosrun arm_controller arm_zero_hold_logger_uam_v5.py
 ```
 
@@ -283,6 +302,13 @@ rosnode list
 ## 10. 实物联调占位
 
 这一节先留占位，后续实物联调时补充。
+
+注意：
+
+- `setup_px4_sitl_ros_env.sh` 是仿真专用脚本
+- 它会加载 Gazebo 和 SITL 相关环境
+- 实物联调时不要直接复用这条脚本
+- 实物后续应使用单独的 `MAVROS + catkin` 环境准备流程
 
 后续计划补充：
 
