@@ -106,3 +106,10 @@ src/modules/simulator/simulator_config.h
 src/systemcmds/topic_listener/listener_generated.cpp
 
 !src/drivers/distance_sensor/broadcom/afbrs50/Lib/*
+
+# catkin workspace artifacts
+ESO_paper_reproduction/.catkin_workspace
+ESO_paper_reproduction/.catkin_tools/
+ESO_paper_reproduction/build/
+ESO_paper_reproduction/devel/
+ESO_paper_reproduction/install/
