@@ -45,7 +45,7 @@ StudyDemo::StudyDemo() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::nav_and_controllers)
 {
-	// parameters_update(true);
+	parameters_update(true);//上电时默认读一次参数
 }
 
 StudyDemo::~StudyDemo()
@@ -68,6 +68,20 @@ bool StudyDemo::init()
 
 void StudyDemo::parameters_update(bool force)
 {
+	// check for parameter updates
+	if (_parameter_update_sub.updated() || force) {
+		// clear update
+		parameter_update_s pupdate;
+		_parameter_update_sub.copy(&pupdate);
+
+		// update parameters from storage
+		ModuleParams::updateParams();
+		SuperBlock::updateParams();
+
+		study_demo_en = _param_study_demo_en.get();
+		study_demo_len = _param_study_demo_len.get();
+
+	}
 }
 
 void StudyDemo::Run()
@@ -91,7 +105,13 @@ void StudyDemo::Run()
 		const float dt = math::constrain(((time_stamp_now - _time_stamp_last_loop) * 1e-6f), 0.002f, 0.04f);
 		_time_stamp_last_loop = time_stamp_now;
 
-		printf("Hello sky! %f\r\n", (double)dt);
+		if(study_demo_en){
+			printf("Hello sky! %f\r\n", (double)dt);
+		}else{
+			printf("Hello land! %f\r\n", (double)study_demo_len);
+		}
+
+
 
 	}
 	perf_end(_cycle_perf);

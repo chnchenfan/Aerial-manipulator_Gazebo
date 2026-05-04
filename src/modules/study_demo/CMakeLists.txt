@@ -32,15 +32,13 @@
 ############################################################################
 
 px4_add_module(
-	# MODULE modules__mc_pos_control
-	MODULE modules__study_demo
-	# MAIN mc_pos_control
-	MAIN study_demo
+	MODULE modules__study_demo #文件夹名字
+	MAIN study_demo            #文件夹名字
 	COMPILE_FLAGS
-	SRCS
+	SRCS                       #代码文件
 		StudyDemo.cpp
 		StudyDemo.hpp
-	DEPENDS
+	DEPENDS                    #涉及到的库
 		controllib
 		geo
 		SlewRate

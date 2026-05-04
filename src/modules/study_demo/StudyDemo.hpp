@@ -88,7 +88,18 @@ private:
 	hrt_abstime	_time_stamp_last_loop{0};		/**< time stamp of last loop iteration */
 	perf_counter_t _cycle_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle time")};
 	uORB::SubscriptionCallbackWorkItem _local_pos_sub {this, ORB_ID(vehicle_local_position)};	/**< vehicle local position */
-
+	uORB::SubscriptionInterval _parameter_update_sub {ORB_ID(parameter_update), 1_s};
 	void parameters_update(bool force);
+
+
+	bool study_demo_en;
+	float study_demo_len;
+	DEFINE_PARAMETERS(
+		// Position Control
+		(ParamFloat<px4::params::STUDY_DEMO_LEN>)         _param_study_demo_len,
+
+		(ParamInt<px4::params::STUDY_DEMO_EN>)       _param_study_demo_en
+
+	);
 
 };
