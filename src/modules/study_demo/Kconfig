@@ -1,0 +1,12 @@
+menuconfig MODULES_STUDY_DEMO
+	bool "study_demo"
+	default n
+	---help---
+		Enable support for study_demo
+
+menuconfig USER_STUDY_DEMO
+	bool "study_demo running as userspace module"
+	default y
+	depends on BOARD_PROTECTED && MODULES_STUDY_DEMO
+	---help---
+		Put study_demo in userspace memory

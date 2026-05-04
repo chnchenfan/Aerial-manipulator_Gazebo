@@ -85,3 +85,5 @@ fi
 # Start Multicopter Land Detector.
 #
 land_detector start multicopter
+
+study_demo start
