@@ -116,11 +116,16 @@ ESOMulticopterRateControl::parameters_updated()
 	_rate_control.setESOBandwidth(
 		Vector3f(_param_eso_rate_bw_r.get(), _param_eso_rate_bw_p.get(), _param_eso_rate_bw_y.get()));
 
+	_dyn_ff_enabled = _param_eso_dyn_ff_en.get();
 	_rate_control.setKBeta(_param_eso_k_beta.get());
 	_rate_control.setMaxTorque(_param_eso_max_torque.get());
 	_rate_control.setIntegralScale(_param_eso_rate_i_scale.get());
 	_rate_control.setTauSScale(_param_eso_taus_k.get());
+	_rate_control.setTauSAxisScale(Vector3f(_param_eso_taus_k_r.get(), _param_eso_taus_k_p.get(), _param_eso_taus_k_y.get()));
+	_rate_control.setTauSObserverAxisScale(Vector3f(_param_eso_taus_obs_r.get(), _param_eso_taus_obs_p.get(), _param_eso_taus_obs_y.get()));
+	_rate_control.setTauSControlAxisScale(Vector3f(_param_eso_taus_ctl_r.get(), _param_eso_taus_ctl_p.get(), _param_eso_taus_ctl_y.get()));
 	_rate_control.setTauSLimitNm(_param_eso_taus_lim.get());
+	_rate_control.setTauSFilterTimeConstant(_param_eso_taus_tau.get());
 
 	// manual rate control acro mode rate limits
 	_acro_rate_max = Vector3f(radians(_param_eso_acro_r_max.get()), radians(_param_eso_acro_p_max.get()),
@@ -273,7 +278,10 @@ ESOMulticopterRateControl::Run()
 			_last_eso_aux_timestamp = eso_aux.timestamp;
 
 			if ((now - _last_eso_aux_timestamp) <= ESO_AUX_TIMEOUT) {
-				_rate_control.setAttitudeAux(Vector3f(eso_aux.omega_r_dot), Vector3f(eso_aux.beta_v), Vector3f(eso_aux.tau_s));
+				// Keep raw tau_s visible in low-rate diagnostics even when dynamic feed-forward
+				// injection is disabled. setTauSScale() still gates whether it affects control.
+				const Vector3f tau_s = Vector3f(eso_aux.tau_s);
+				_rate_control.setAttitudeAux(Vector3f(eso_aux.omega_r_dot), Vector3f(eso_aux.beta_v), tau_s);
 			}
 		}
 
@@ -359,9 +367,10 @@ ESOMulticopterRateControl::Run()
 					 (double)att_control(0), (double)att_control(1), (double)att_control(2),
 					 (double)_thrust_sp, (int)aux_fresh);
 			}*/
-				// Debug: print actual vs estimated rate (and disturbance if valid), throttled
+				// Debug hook kept disabled during automated tuning to avoid perturbing SITL timing with high-volume logs.
+			static constexpr bool kRateDebugPrintEnabled = false;
 			static hrt_abstime last_print1{0};
-				if (hrt_elapsed_time(&last_print1) > 500000) {//0.5秒一次
+				if (kRateDebugPrintEnabled && hrt_elapsed_time(&last_print1) > 500000) {//0.5秒一次
 					last_print1 = hrt_absolute_time();
 					const Vector3f rate_error = rates - _rates_sp;
 					PX4_INFO("rate: e(w-sp)[%.2f %.2f %.2f] w[%.2f %.2f %.2f] w_d[%.2f %.2f %.2f]",
@@ -410,8 +419,9 @@ ESOMulticopterRateControl::Run()
 			rate_ctrl_status.timestamp = hrt_absolute_time();
 			_controller_status_pub.publish(rate_ctrl_status);
 
-			// 【新增】发布ESO速率调试信息 (To ROS via debug_key_value)
-			{
+			// Keep high-volume named-value debug publishing disabled during autotune.
+			static constexpr bool kPublishRateDebugKeyValues = false;
+			if (kPublishRateDebugKeyValues) {
 				/* Removed internal uORB topic
 				eso_rate_debug_s eso_dbg{};
 				eso_dbg.timestamp = hrt_absolute_time();

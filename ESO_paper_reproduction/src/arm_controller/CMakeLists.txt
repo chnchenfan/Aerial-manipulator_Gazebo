@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   joint_state_controller
   effort_controllers
   trajectory_msgs
+  sensor_msgs
   std_msgs
 )
 
@@ -17,5 +18,6 @@ catkin_install_python(PROGRAMS
   scripts/joint_position_commander.py
   scripts/joint_position_commander_uam_v5.py
   scripts/arm_zero_hold_logger_uam_v5.py
+  scripts/uam_v5_experiment_motion.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

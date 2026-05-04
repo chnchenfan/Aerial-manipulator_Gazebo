@@ -246,6 +246,7 @@ void ESOMulticopterPositionControl::parameters_update(bool force)
 		// ------------------------------------------------------------------
 		// 设置位置环积分限幅
 		_control.setPositionIntegralLimit(_param_ESO_pos_int_lim.get());
+		_control.setDynamicsFeedforwardEnabled(_param_ESO_dyn_ff_en.get());
 
 		// 设置 ESO 带宽
 		_control.setESOBandwidth(Vector3f(
@@ -761,8 +762,40 @@ void ESOMulticopterPositionControl::Run()
 			local_pos_sp.timestamp = hrt_absolute_time();
 			_local_pos_sp_pub.publish(local_pos_sp);
 
-			// 24.5 【新增】发布ESO调试信息 (To ROS via debug_key_value)
-			{
+			if ((_last_pos_ctrl_status_pub == 0) || hrt_elapsed_time(&_last_pos_ctrl_status_pub) >= 200_ms) {
+				_last_pos_ctrl_status_pub = hrt_absolute_time();
+
+				const matrix::Vector3f pos = _control.getCurrentPosition();
+				const matrix::Vector3f vel = _control.getCurrentVelocity();
+				const matrix::Vector3f pos_hat = _control.getESOEstimatedPosition();
+				const matrix::Vector3f vel_hat = _control.getESOEstimatedVelocity();
+				const matrix::Vector3f dist_hat = _control.getESODisturbance();
+				const matrix::Vector3f eso_input = _control.getESOInput();
+
+				position_controller_status_s pos_status{};
+				pos_status.timestamp = _last_pos_ctrl_status_pub;
+				pos_status.nav_bearing = NAN;
+				pos_status.target_bearing = NAN;
+				pos_status.xtrack_error = NAN;
+				pos_status.yaw_acceptance = NAN;
+
+				for (int i = 0; i < 3; i++) {
+					pos_status.eso_pos[i] = pos(i);
+					pos_status.eso_pos_hat[i] = pos_hat(i);
+					pos_status.eso_pos_error[i] = pos(i) - pos_hat(i);
+					pos_status.eso_vel[i] = vel(i);
+					pos_status.eso_vel_hat[i] = vel_hat(i);
+					pos_status.eso_vel_error[i] = vel(i) - vel_hat(i);
+					pos_status.eso_disturbance_hat[i] = dist_hat(i);
+					pos_status.eso_input[i] = eso_input(i);
+				}
+
+				_pos_ctrl_status_pub.publish(pos_status);
+			}
+
+			// Keep high-volume named-value debug publishing disabled during autotune.
+			static constexpr bool kPublishPosDebugKeyValues = false;
+			if (kPublishPosDebugKeyValues) {
 				// ESO估计值
 				const matrix::Vector3f est_pos = _control.getESOEstimatedPosition();
 				// const matrix::Vector3f est_vel = _control.getESOEstimatedVelocity();

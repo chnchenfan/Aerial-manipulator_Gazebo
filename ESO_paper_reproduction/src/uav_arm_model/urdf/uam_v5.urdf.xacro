@@ -18,10 +18,10 @@
 
   <link name="base_link">
     <inertial>
-      <origin xyz="0.01027894 -0.00024771 0.16606907" rpy="0 0 0"/>
-      <mass value="2.0"/>
-      <inertia ixx="0.02601" ixy="8.015e-05" ixz="-0.00070008"
-               iyy="0.02942848" iyz="-8.915e-05" izz="0.04177777"/>
+      <origin xyz="-0.044 0 -0.046" rpy="0 0 0"/>
+      <mass value="3.6678"/>
+      <inertia ixx="0.049436" ixy="0" ixz="0"
+               iyy="0.052665" iyz="0" izz="0.086619"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -33,7 +33,7 @@
       </material>
     </visual>
     <visual>
-      <origin xyz="0.104 0 0.098434" rpy="-3.1416 0 0"/>
+      <origin xyz="0.115 0 -0.09" rpy="-3.1416 0 0"/>
       <geometry>
         <mesh filename="${mesh_path}/arm_fix_link.STL"/>
       </geometry>
@@ -45,7 +45,7 @@
       </geometry>
     </collision>
     <collision>
-      <origin xyz="0.104 0 0.098434" rpy="-3.1416 0 0"/>
+      <origin xyz="0.115 0 -0.09" rpy="-3.1416 0 0"/>
       <geometry>
         <mesh filename="${mesh_path}/arm_fix_link.STL"/>
       </geometry>
@@ -54,10 +54,10 @@
 
   <link name="arm_link1">
     <inertial>
-      <origin xyz="0.0 0.013 0.043" rpy="0 0 0"/>
-      <mass value="0.2"/>
-      <inertia ixx="0.00030" ixy="0" ixz="0"
-               iyy="0.00030" iyz="0" izz="0.00015"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.593"/>
+      <inertia ixx="0.000839" ixy="0" ixz="0"
+               iyy="0.000791" iyz="0" izz="0.000943"/>
     </inertial>
     <visual>
       <geometry>
@@ -75,19 +75,20 @@
   </link>
 
   <joint name="arm_joint1" type="continuous">
-    <origin xyz="0.104 0 0.098434" rpy="-3.1416 0 0"/>
+    <origin xyz="0.115 0 0.09" rpy="-3.1416 0 0"/>
     <parent link="base_link"/>
     <child link="arm_link1"/>
     <axis xyz="0 0 1"/>
+    <limit effort="4.0" velocity="4.0"/>
     <dynamics damping="0.12" friction="0.02"/>
   </joint>
 
   <link name="arm_link2">
     <inertial>
-      <origin xyz="0.0913 0.0001 0.0" rpy="0 0 0"/>
-      <mass value="0.35"/>
-      <inertia ixx="0.00080" ixy="0" ixz="0"
-               iyy="0.00120" iyz="0" izz="0.00090"/>
+      <origin xyz="0.075 0 0" rpy="0 0 0"/>
+      <mass value="0.594"/>
+      <inertia ixx="0.000302" ixy="0" ixz="0"
+               iyy="0.002811" iyz="0" izz="0.002717"/>
     </inertial>
     <visual>
       <geometry>
@@ -105,18 +106,19 @@
   </link>
 
   <joint name="arm_joint2" type="continuous">
-    <origin xyz="0 0.02 0.056" rpy="-1.5708 0 0"/>
+    <origin xyz="0 0 0.072" rpy="-1.5708 0 0"/>
     <parent link="arm_link1"/>
     <child link="arm_link2"/>
     <axis xyz="0 0 1"/>
+    <limit effort="4.0" velocity="4.0"/>
     <dynamics damping="0.20" friction="0.03"/>
   </joint>
 
   <link name="left_hand_link">
     <inertial>
       <origin xyz="0.02582393 -0.001 -0.00633685" rpy="0 0 0"/>
-      <mass value="0.01"/>
-      <inertia ixx="1e-05" ixy="0" ixz="0" iyy="1e-05" iyz="0" izz="1e-05"/>
+      <mass value="0.02"/>
+      <inertia ixx="8e-06" ixy="0" ixz="0" iyy="8e-06" iyz="0" izz="8e-06"/>
     </inertial>
     <visual>
       <geometry>
@@ -145,8 +147,8 @@
   <link name="right_hand_link">
     <inertial>
       <origin xyz="0.02582393 -0.001 0.00633685" rpy="0 0 0"/>
-      <mass value="0.01"/>
-      <inertia ixx="1e-05" ixy="0" ixz="0" iyy="1e-05" iyz="0" izz="1e-05"/>
+      <mass value="0.02"/>
+      <inertia ixx="8e-06" ixy="0" ixz="0" iyy="8e-06" iyz="0" izz="8e-06"/>
     </inertial>
     <visual>
       <geometry>

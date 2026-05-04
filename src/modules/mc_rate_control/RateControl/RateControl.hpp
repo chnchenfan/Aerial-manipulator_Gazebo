@@ -37,7 +37,7 @@
  * PID 3 axis angular rate / angular velocity control.
  */
 
-#pragma once
+#pragma once // 编译一次，避免重复编译
 
 #include <matrix/matrix/math.hpp>
 

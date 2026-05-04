@@ -51,7 +51,7 @@
  * @increment 0.1
  * @group Multicopter Attitude Control
  */
-PARAM_DEFINE_FLOAT(ESO_ROLL_P, 1.2f);
+PARAM_DEFINE_FLOAT(ESO_ROLL_P, 1.30f);
 
 /**
  * 俯仰 P 增益
@@ -65,7 +65,7 @@ PARAM_DEFINE_FLOAT(ESO_ROLL_P, 1.2f);
  * @increment 0.1
  * @group Multicopter Attitude Control
  */
-PARAM_DEFINE_FLOAT(ESO_PITCH_P, 1.2f);
+PARAM_DEFINE_FLOAT(ESO_PITCH_P, 1.30f);
 
 /**
  * 偏航 P 增益
@@ -79,7 +79,7 @@ PARAM_DEFINE_FLOAT(ESO_PITCH_P, 1.2f);
  * @increment 0.1
  * @group Multicopter Attitude Control
  */
-PARAM_DEFINE_FLOAT(ESO_YAW_P, 1.2f);
+PARAM_DEFINE_FLOAT(ESO_YAW_P, 0.8f);
 
 /**
  * 偏航权重
@@ -97,7 +97,7 @@ PARAM_DEFINE_FLOAT(ESO_YAW_P, 1.2f);
  * @increment 0.1
  * @group Multicopter Attitude Control
  */
-PARAM_DEFINE_FLOAT(ESO_YAW_WEIGHT, 0.4f);
+PARAM_DEFINE_FLOAT(ESO_YAW_WEIGHT, 0.35f);
 
 /**
  * 最大横滚角速度

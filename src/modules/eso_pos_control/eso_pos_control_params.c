@@ -105,12 +105,12 @@ PARAM_DEFINE_FLOAT(ESO_THR_MAX, 1.0f);
 /**
  * 垂直位置误差的 P 增益 (位置环)
  */
-PARAM_DEFINE_FLOAT(ESO_Z_P, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_Z_P, 1.05f);
 
 /**
  * 垂直位置误差的 I 增益 (位置环)
  */
-PARAM_DEFINE_FLOAT(ESO_Z_I, 0.2f);
+PARAM_DEFINE_FLOAT(ESO_Z_I, 0.11f);
 
 /**
  * 垂直速度误差的 P 增益 (速度环)
@@ -120,12 +120,12 @@ PARAM_DEFINE_FLOAT(ESO_Z_I, 0.2f);
  * @decimal 2
  * @group Multicopter Position Control
  */
-PARAM_DEFINE_FLOAT(ESO_Z_VEL_P_ACC, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_Z_VEL_P_ACC, 1.05f);
 
 /**
  * ESO Z轴带宽参数
  */
-PARAM_DEFINE_FLOAT(ESO_Z_BW, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_Z_BW, 0.95f);
 
 /* =================================================================
  * 3. 垂直速度限制 (Z Axis Constraints)
@@ -191,27 +191,27 @@ PARAM_DEFINE_FLOAT(ESO_Z_VEL_MAX_DN, 1.f);
  * @decimal 2
  * @group Multicopter Position Control
  */
-PARAM_DEFINE_FLOAT(ESO_XY_P, 0.95f);
+PARAM_DEFINE_FLOAT(ESO_XY_P, 1.10f);
 
 /**
  * 水平位置误差的 i 增益 (位置环)
  */
-PARAM_DEFINE_FLOAT(ESO_XY_I, 0.4f);
+PARAM_DEFINE_FLOAT(ESO_XY_I, 0.42f);
 
 /**
  * 水平速度误差的 P 增益 (速度环)
  *
- * @min 1.2
+ * @min 0.1
  * @max 5.0
  * @decimal 2
  * @group Multicopter Position Control
  */
-PARAM_DEFINE_FLOAT(ESO_XY_VEL_P_ACC, 1.2f);
+PARAM_DEFINE_FLOAT(ESO_XY_VEL_P_ACC, 1.80f);
 
 /**
  * ESO XY轴带宽
  */
-PARAM_DEFINE_FLOAT(ESO_XY_BW, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_XY_BW, 1.20f);
 
 /**
  * 位置 ESO 起飞门控（开关）
@@ -258,7 +258,7 @@ PARAM_DEFINE_FLOAT(ESO_XY_CRUISE, 5.0f);
 PARAM_DEFINE_FLOAT(ESO_VEL_MANUAL, 10.0f);
 
 // 【新增】积分限幅参数
-PARAM_DEFINE_FLOAT(ESO_POS_INT_LIM, 0.2f);
+PARAM_DEFINE_FLOAT(ESO_POS_INT_LIM, 0.85f);
 
 /**
  * Maximum horizontal velocity
@@ -270,7 +270,7 @@ PARAM_DEFINE_FLOAT(ESO_POS_INT_LIM, 0.2f);
  * @decimal 2
  * @group Multicopter Position Control
  */
-PARAM_DEFINE_FLOAT(ESO_XY_VEL_MAX, 12.0f);
+PARAM_DEFINE_FLOAT(ESO_XY_VEL_MAX, 2.60f);
 
 /**
  * Maximum tilt angle in air
@@ -351,7 +351,7 @@ PARAM_DEFINE_FLOAT(ESO_MAN_Y_TAU, 0.08f);
  * @decimal 2
  * @group Multicopter Position Control
  */
-PARAM_DEFINE_FLOAT(ESO_ACC_HOR_MAX, 5.0f);
+PARAM_DEFINE_FLOAT(ESO_ACC_HOR_MAX, 5.50f);
 
 /**
  * Acceleration for auto and for manual
@@ -363,7 +363,7 @@ PARAM_DEFINE_FLOAT(ESO_ACC_HOR_MAX, 5.0f);
  * @decimal 2
  * @group Multicopter Position Control
  */
-PARAM_DEFINE_FLOAT(ESO_ACC_HOR, 3.0f);
+PARAM_DEFINE_FLOAT(ESO_ACC_HOR, 4.50f);
 
 /**
  * Maximum vertical acceleration in velocity controlled modes upward
@@ -399,7 +399,7 @@ PARAM_DEFINE_FLOAT(ESO_ACC_DOWN_MAX, 3.0f);
  * @decimal 2
  * @group Multicopter Position Control
  */
-PARAM_DEFINE_FLOAT(ESO_JERK_MAX, 8.0f);
+PARAM_DEFINE_FLOAT(ESO_JERK_MAX, 6.0f);
 
 /**
  * Jerk limit in auto mode
@@ -411,7 +411,7 @@ PARAM_DEFINE_FLOAT(ESO_JERK_MAX, 8.0f);
  * @decimal 1
  * @group Multicopter Position Control
  */
-PARAM_DEFINE_FLOAT(ESO_JERK_AUTO, 4.0f);
+PARAM_DEFINE_FLOAT(ESO_JERK_AUTO, 6.0f);
 
 /**
  * Altitude control mode.

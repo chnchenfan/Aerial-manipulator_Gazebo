@@ -1,195 +1,81 @@
 # arm_controller
 
-## English
+`arm_controller` 是 UAM V5 机械臂 ROS 控制包。它不直接决定无人机飞行轨迹，而是为 Gazebo 中的机械臂关节加载 PID 控制器，并在 exp1/exp4 中按顶层任务节点发出的使能信号产生机械臂扰动。
 
-### 1. Overview
+## 文件结构
 
-`arm_controller` is the ROS package that brings up `ros_control` PID position controllers for the manipulator joints and provides helper scripts to move the arm during PX4 SITL experiments.
+```text
+arm_controller/
+├── CMakeLists.txt
+│   └── 声明 ROS 依赖，并安装 Python 控制脚本。
+├── package.xml
+│   └── 声明 controller_manager、joint_state_controller、effort_controllers、sensor_msgs、std_msgs 等运行依赖。
+├── config/
+│   ├── joint_pid_uam_v5.yaml
+│   │   └── UAM V5 的 arm_joint1、arm_joint2、left_hand_joint 位置控制器 PID 参数。
+│   ├── joint_pid.yaml
+│   │   └── 旧 uav_arm_v4 控制器参数；exp1/exp4 不使用。
+│   └── 111.txt
+│       └── 本地调试遗留文件；exp1/exp4 不使用。
+├── launch/
+│   ├── controller_bringup_uam_v5.launch
+│   │   └── exp1/exp4 使用的 UAM V5 机械臂控制器启动文件。
+│   └── controller_bringup.launch
+│       └── 旧 uav_arm_v4 控制器启动文件；exp1/exp4 不使用。
+├── scripts/
+│   ├── uam_v5_experiment_motion.py
+│   │   └── exp1/exp4 的机械臂正弦扰动命令节点。
+│   ├── joint_position_commander_uam_v5.py
+│   │   └── UAM V5 手动关节命令工具；不由 exp1/exp4 自动启动。
+│   ├── arm_zero_hold_logger_uam_v5.py
+│   │   └── UAM V5 零位保持与记录工具；不由 exp1/exp4 自动启动。
+│   ├── joint_position_commander.py
+│   │   └── 旧 uav_arm_v4 手动关节命令工具；exp1/exp4 不使用。
+│   └── README_uam_v5_tools.md
+│       └── UAM V5 手动工具说明。
+└── README.md
+    └── 当前文件。
+```
 
-It supports both platform variants in this repository:
+## Launch 说明
 
-- `uav_arm_v4`
-- `uam_v5`
+### `launch/controller_bringup_uam_v5.launch`
 
-### 2. What Was Modified
+功能：在命名空间 `uav_arm` 下加载 `config/joint_pid_uam_v5.yaml`，并通过 `controller_manager/spawner` 启动三个控制器：
 
-This package was added to make the arm side of the experiment reproducible:
+- `joint_state_controller`
+- `arm_joint1_position_controller`
+- `arm_joint2_position_controller`
+- `left_hand_joint_position_controller`
 
-- separate controller bring-up launch files for `uav_arm_v4` and `uam_v5`,
-- dedicated PID configuration YAML files for both models,
-- motion scripts for both arm variants,
-- a logging tool for the `uam_v5` zero-hold test.
+涉及文件：
 
-### 3. Key Components
-
-- `launch/controller_bringup.launch`
-  - loads `config/joint_pid.yaml`
-  - spawns `uav_arm_v4` joint controllers
 - `launch/controller_bringup_uam_v5.launch`
-  - loads `config/joint_pid_uam_v5.yaml`
-  - spawns `uam_v5` joint controllers
-- `scripts/joint_position_commander.py`
-  - smooth interpolation command script for the `uav_arm_v4` arm
-- `scripts/joint_position_commander_uam_v5.py`
-  - smooth interpolation command script for the `uam_v5` arm
-  - records target, position, velocity, effort, and error
-- `scripts/arm_zero_hold_logger_uam_v5.py`
-  - holds selected `uam_v5` joints at zero
-  - records CSV and PNG outputs
+- `config/joint_pid_uam_v5.yaml`
+- Gazebo/URDF 中定义的 `arm_joint1`、`arm_joint2`、`left_hand_joint`
+- `scripts/uam_v5_experiment_motion.py` 发布到这些控制器的 command 话题
 
-### 4. Interfaces / Launch or Runtime Entry Points
+信息流：
 
-Namespace convention:
-
-- default namespace: `uav_arm`
-- controller topics follow:
-  - `/<namespace>/<joint>_position_controller/command`
-- joint state topic:
-  - `/<namespace>/joint_states`
-- target joint topic published by the commander scripts:
-  - `/<namespace>/target_joint_states`
-
-Launch entry points:
-
-```bash
-roslaunch arm_controller controller_bringup.launch
-roslaunch arm_controller controller_bringup_uam_v5.launch
+```text
+uav_arm_top/launch/arm_pid_SITL_Gazebo_uam_v5.launch
+  -> include controller_bringup_uam_v5.launch
+  -> rosparam load joint_pid_uam_v5.yaml
+  -> controller_manager/spawner
+  -> /uav_arm/<joint>_position_controller/command
+  -> gazebo_ros_control
+  -> /uav_arm/joint_states
 ```
 
-Runtime scripts:
+## exp1/exp4 中的机械臂任务
 
-```bash
-rosrun arm_controller joint_position_commander.py
-rosrun arm_controller joint_position_commander_uam_v5.py
-rosrun arm_controller arm_zero_hold_logger_uam_v5.py
-```
+`scripts/uam_v5_experiment_motion.py` 在 exp1 和 exp4 中由顶层 launch 自动启动。默认参数如下：
 
-### 5. How to Run or Validate
+- 使能话题：`/experiment/arm_motion_enabled`
+- 发布频率：`50 Hz`
+- 扰动频率：`0.5 Hz`
+- `arm_joint1 = -pi + 0.35 * sin(2*pi*0.5*t)`
+- `arm_joint2 = 1.5*pi - 0.10 - 0.35 * sin(2*pi*0.5*t)`
+- `left_hand_joint = 0.005 + 0.003 * sin(2*pi*0.5*t)`
 
-Typical usage is through `uav_arm_top`, but this package can also be checked directly after the Gazebo model is up:
-
-```bash
-source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
-roslaunch arm_controller controller_bringup.launch
-rosrun arm_controller joint_position_commander.py
-```
-
-For `uam_v5`:
-
-```bash
-source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
-roslaunch arm_controller controller_bringup_uam_v5.launch
-rosrun arm_controller joint_position_commander_uam_v5.py
-rosrun arm_controller arm_zero_hold_logger_uam_v5.py
-```
-
-Validation checks:
-
-- the controller spawner loads without missing-controller errors,
-- joint command topics exist in the expected namespace,
-- `/uav_arm/joint_states` updates while the scripts run,
-- `uam_v5` logging scripts produce CSV/PNG outputs.
-
-### 6. File Map
-
-- `config/joint_pid.yaml`: PID gains for `uav_arm_v4`
-- `config/joint_pid_uam_v5.yaml`: PID gains for `uam_v5`
-- `launch`: controller bring-up launch files
-- `scripts`: motion and logging tools
-
-## 中文
-
-### 1. 概述
-
-`arm_controller` 是机械臂 ROS 控制包，负责加载 `ros_control` 的关节 PID 位置控制器，并提供实验中驱动机械臂的辅助脚本。
-
-它同时支持本仓库里的两套平台：
-
-- `uav_arm_v4`
-- `uam_v5`
-
-### 2. 修改了什么
-
-这个包主要补齐了机械臂实验链路中可复现的控制部分：
-
-- 为 `uav_arm_v4` 和 `uam_v5` 分别提供控制器 bring-up launch，
-- 为两种模型分别提供 PID 参数文件，
-- 为两种机械臂分别提供动作脚本，
-- 为 `uam_v5` 增加零位保持与日志记录工具。
-
-### 3. 关键组成
-
-- `launch/controller_bringup.launch`
-  - 读取 `config/joint_pid.yaml`
-  - 启动 `uav_arm_v4` 的关节控制器
-- `launch/controller_bringup_uam_v5.launch`
-  - 读取 `config/joint_pid_uam_v5.yaml`
-  - 启动 `uam_v5` 的关节控制器
-- `scripts/joint_position_commander.py`
-  - `uav_arm_v4` 的平滑插值关节命令脚本
-- `scripts/joint_position_commander_uam_v5.py`
-  - `uam_v5` 的平滑插值关节命令脚本
-  - 同时记录目标、位置、速度、力矩和误差
-- `scripts/arm_zero_hold_logger_uam_v5.py`
-  - 把 `uam_v5` 的指定关节保持在零位
-  - 输出 CSV 和 PNG
-
-### 4. 接口 / Launch 与运行入口
-
-命名空间约定：
-
-- 默认 namespace：`uav_arm`
-- 控制器命令话题格式：
-  - `/<namespace>/<joint>_position_controller/command`
-- 关节状态话题：
-  - `/<namespace>/joint_states`
-- commander 脚本还会发布：
-  - `/<namespace>/target_joint_states`
-
-Launch 入口：
-
-```bash
-roslaunch arm_controller controller_bringup.launch
-roslaunch arm_controller controller_bringup_uam_v5.launch
-```
-
-运行脚本：
-
-```bash
-rosrun arm_controller joint_position_commander.py
-rosrun arm_controller joint_position_commander_uam_v5.py
-rosrun arm_controller arm_zero_hold_logger_uam_v5.py
-```
-
-### 5. 如何运行或验证
-
-通常这个包由 `uav_arm_top` 顶层 launch 带起，但 Gazebo 模型启动后也可以单独检查：
-
-```bash
-source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
-roslaunch arm_controller controller_bringup.launch
-rosrun arm_controller joint_position_commander.py
-```
-
-`uam_v5` 示例：
-
-```bash
-source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
-roslaunch arm_controller controller_bringup_uam_v5.launch
-rosrun arm_controller joint_position_commander_uam_v5.py
-rosrun arm_controller arm_zero_hold_logger_uam_v5.py
-```
-
-验证时重点看：
-
-- controller spawner 启动时不报缺失控制器错误，
-- 关节命令话题出现在正确 namespace 下，
-- `/uav_arm/joint_states` 会随脚本更新，
-- `uam_v5` 日志脚本能正常生成 CSV/PNG。
-
-### 6. 文件索引
-
-- `config/joint_pid.yaml`：`uav_arm_v4` 的 PID 参数
-- `config/joint_pid_uam_v5.yaml`：`uam_v5` 的 PID 参数
-- `launch`：控制器启动文件
-- `scripts`：动作与日志工具
+使能前节点持续发布中立位；收到 `/experiment/arm_motion_enabled=True` 后开始按正弦轨迹运动。该机械臂运动是 exp1 悬停抗扰和 exp4 方形轨迹跟踪中的外部扰动源。

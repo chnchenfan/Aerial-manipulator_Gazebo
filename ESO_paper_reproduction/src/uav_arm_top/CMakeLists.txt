@@ -6,12 +6,13 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   geometry_msgs
   sensor_msgs
+  std_msgs
   mavros_msgs
   uav_control
 )
 
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy geometry_msgs sensor_msgs mavros_msgs uav_control
+  CATKIN_DEPENDS roscpp rospy geometry_msgs sensor_msgs std_msgs mavros_msgs uav_control
 )
 
 include_directories(
@@ -50,6 +51,22 @@ target_link_libraries(eso_circle_offboard_node
   uav_core_lib
 )
 
+add_executable(eso_hover_disturbance_offboard_node
+  src/eso_hover_disturbance_offboard_node.cpp
+)
+target_link_libraries(eso_hover_disturbance_offboard_node
+  ${catkin_LIBRARIES}
+  uav_core_lib
+)
+
+add_executable(eso_square_arm_experiment_node
+  src/eso_square_arm_experiment_node.cpp
+)
+target_link_libraries(eso_square_arm_experiment_node
+  ${catkin_LIBRARIES}
+  uav_core_lib
+)
+
 install(TARGETS eso_offboard_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
@@ -63,6 +80,14 @@ install(TARGETS eso_offboard_2_5_node
 )
 
 install(TARGETS eso_circle_offboard_node
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS eso_hover_disturbance_offboard_node
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS eso_square_arm_experiment_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

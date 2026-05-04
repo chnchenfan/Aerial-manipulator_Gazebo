@@ -136,10 +136,31 @@ public:
 	 */
 	void setTauSScale(float tau_s_scale);
 
+		/**
+		 * 设置 tau_s 分轴缩放/符号。最终注入为：
+		 * tau_s_base = constrain(tau_s, +/- lim) * ESO_TAUS_K * axis_scale
+		 */
+		void setTauSAxisScale(const matrix::Vector3f &tau_s_axis_scale);
+
+		/**
+		 * 设置 tau_s 给 ESO 名义模型的分轴比例/符号。
+		 */
+		void setTauSObserverAxisScale(const matrix::Vector3f &tau_s_obs_axis_scale);
+
+		/**
+		 * 设置 tau_s 给控制律直接补偿的分轴比例/符号。
+		 */
+		void setTauSControlAxisScale(const matrix::Vector3f &tau_s_ctrl_axis_scale);
+
 	/**
 	 * 设置 tau_s 单轴绝对限幅（N*m）。
 	 */
 	void setTauSLimitNm(float tau_s_limit_nm);
+
+	/**
+	 * 设置 tau_s 注入低通时间常数（s）。
+	 */
+	void setTauSFilterTimeConstant(float tau_s_filter_tau);
 
 	/**
 	 * Set the integral term to 0 to prevent windup
@@ -225,9 +246,17 @@ private:
 	float _k_beta{0.5f}; ///< k_beta feedback gain
 	float _max_torque{1.5f}; ///< max torque for normalization [N*m]
 	float _integral_scale{0.2f}; ///< 积分输出缩放（小积分比例）
-	float _tau_s_scale{0.f}; ///< tau_s 软启用比例 [0,1]
-	float _tau_s_limit_nm{0.3f}; ///< tau_s 单轴绝对限幅 [N*m]
+		float _tau_s_scale{0.f}; ///< tau_s 软启用比例 [0,1]
+		matrix::Vector3f _tau_s_axis_scale{1.f, 1.f, 1.f}; ///< tau_s 共同分轴缩放/符号
+		matrix::Vector3f _tau_s_obs_axis_scale{1.f, 1.f, 1.f}; ///< tau_s 给 ESO 名义模型的分轴比例/符号
+		matrix::Vector3f _tau_s_ctrl_axis_scale{1.f, 1.f, 1.f}; ///< tau_s 给控制律直接补偿的分轴比例/符号
+		float _tau_s_limit_nm{0.3f}; ///< tau_s 单轴绝对限幅 [N*m]
+	float _tau_s_filter_tau{0.1f}; ///< tau_s 注入低通时间常数 [s]
+	bool _tau_s_filter_valid{false}; ///< tau_s 低通状态是否已初始化
+	matrix::Vector3f _tau_s_filtered{}; ///< 低通后的 tau_s 实际注入量
 	matrix::Vector3f _last_torque{}; ///< last physical torque command [N*m]
+	matrix::Vector3f _last_rate{}; ///< last measured body angular rate [rad/s]
+	matrix::Vector3f _last_rate_sp{}; ///< last reference body angular rate [rad/s]
 	matrix::Vector3f _last_inertia_term{};  ///< 上一周期惯性项
 	matrix::Vector3f _last_feedback_term{}; ///< 上一周期速率误差反馈项
 	matrix::Vector3f _last_integral_term{}; ///< 上一周期积分项

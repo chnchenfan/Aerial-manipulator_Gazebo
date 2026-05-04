@@ -16,6 +16,7 @@
   <depend>roslaunch</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
   <depend>mavros_msgs</depend>
   <depend>uav_control</depend>
   <depend>arm_controller</depend>

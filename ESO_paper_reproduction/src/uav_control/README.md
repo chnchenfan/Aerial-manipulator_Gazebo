@@ -1,173 +1,79 @@
 # uav_control
 
-## English
+`uav_control` 提供 exp1/exp4 所需的通用 C++ 控制/轨迹库，以及 ROS bag 录制、原始位置误差计算、实验出图和自动调参脚本。该包不启动飞行任务；飞行任务由 `uav_arm_top` 中的 launch 和 offboard 节点启动。
 
-### 1. Overview
+## 文件结构
 
-`uav_control` is the ROS-side utility and analysis package for this repository. It is not the active flight controller that runs inside PX4. Instead, it provides reusable math helpers, trajectory generation logic, and post-processing scripts used around the PX4-based ESO experiments.
-
-### 2. What Was Modified
-
-This package was added to support the modified PX4 control workflow with:
-
-- `ControlUtils`: force-to-attitude/thrust mapping, quaternion-to-Euler conversion, force saturation, and CoM calculation.
-- `TrajectoryGenerator`: reference generation for hover, circle, spiral, and attitude-sine test modes.
-- plotting and log-analysis scripts for rosbag data and PX4 console logs.
-
-The important project choice is that the main runtime controller now lives in PX4 modules, while this package stays as the ROS-side support layer.
-
-### 3. Key Components
-
-- `include/uav_control/ControlUtils.hpp`
-  - `forceToAttitudeThrust`
-  - `quaternionToEuler`
-  - `saturateForce`
-  - `calculateCoM`
-- `include/uav_control/TrajectoryGenerator.hpp`
-  - `TrajectoryMode`
-  - `TrajectoryParameters`
-  - `update`
-  - `updateAttitude`
-- `scripts/plot_result.py`
-  - full bag-based experiment plotting
-- `scripts/plot_eso_results.py`
-  - quick ESO position/disturbance plot
-- `scripts/hover_rate_stats.py`
-  - PX4 console log statistics for hover/rate behavior
-- `scripts/plot_result_classDesign.py`
-  - publication-style plotting variant
-
-### 4. Interfaces / Runtime Entry Points
-
-- Built library: `uav_core_lib`
-- Installed script entry:
-  - `rosrun uav_control plot_eso_results.py <bag>`
-- Direct script usage:
-  - `python3 scripts/plot_result.py <bag> --start <sec>`
-  - `python3 scripts/hover_rate_stats.py --log <px4.log> ...`
-
-Input data used by the scripts:
-
-- `/mavros/local_position/pose`
-- `/mavros/setpoint_position/local`
-- `/mavros/imu/data`
-- `/mavros/debug/named_value_float`
-- `/uav_arm/joint_states`
-- `/uav_arm/target_joint_states`
-
-### 5. How to Run or Validate
-
-Build the workspace:
-
-```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-catkin_make
-source devel/setup.bash
+```text
+uav_control/
+├── CMakeLists.txt
+│   └── 编译 `uav_core_lib`，安装 exp1/exp4 相关 Python 脚本。
+├── package.xml
+│   └── 声明 roscpp、rospy、rosbag、geometry_msgs、sensor_msgs、mavros_msgs、tf 等依赖。
+├── include/uav_control/
+│   ├── ControlUtils.hpp
+│   │   └── 坐标转换、误差计算和通用控制辅助接口。
+│   └── TrajectoryGenerator.hpp
+│       └── 基础轨迹生成接口。
+├── src/
+│   ├── ControlUtils.cpp
+│   │   └── `ControlUtils.hpp` 的实现，被 `uav_core_lib` 导出。
+│   └── TrajectoryGenerator.cpp
+│       └── `TrajectoryGenerator.hpp` 的实现，被 `uav_core_lib` 导出。
+├── scripts/
+│   ├── auto_tune_uam_v5_eso.py
+│   │   └── UAM V5 ESO 自动调参入口，按 exp1/exp4 launch 生成 fresh bag 并计算 raw metrics。
+│   ├── compute_raw_position_error.py
+│   │   └── 从 ROS bag 读取当前位置与 setpoint，输出 `raw_position_error.json`。
+│   ├── experiment_data_recorder.py
+│   │   └── exp1/exp4 录包脚本，保存 bag 和 metadata。
+│   ├── plot_uam_experiment_comparison.py
+│   │   └── exp1/exp4 后处理出图脚本，生成飞行位置、误差和机械臂跟踪图。
+│   ├── calibrate_tau_s_feedforward.py
+│   │   └── tau_s 前馈离线标定/诊断脚本，不由 exp1/exp4 launch 自动调用。
+│   └── README.md
+│       └── 脚本补充说明。
+└── README.md
+    └── 当前文件。
 ```
 
-Example post-processing:
+## 录制与指标信息流
 
-```bash
-python3 src/uav_control/scripts/plot_result.py test_flight.bag --start 15.5
-python3 src/uav_control/scripts/plot_eso_results.py eso_test_01.bag
-python3 src/uav_control/scripts/hover_rate_stats.py --log /tmp/px4.log --start-sec 20 --end-sec 80
+`experiment_data_recorder.py` 订阅以下核心话题：
+
+- `/mavros/local_position/pose`：PX4/MAVROS 输出的本地位置。
+- `/mavros/setpoint_position/local`：offboard 任务节点发布的位置期望值。
+- `/experiment/arm_motion_enabled`：任务有效段标记；第一次变为 `true` 的时刻写入 metadata 的 `analysis_start_time_s`。
+- `/uav_arm/joint_states`：Gazebo/ros_control 输出的机械臂实际关节状态。
+- `/uav_arm/target_joint_states`：机械臂扰动节点发布的关节期望值。
+- `/mavros/state`：飞控连接、模式、解锁状态。
+
+信息流：
+
+```text
+exp1/exp4 offboard node
+  -> /mavros/setpoint_position/local
+PX4 + MAVROS
+  -> /mavros/local_position/pose, /mavros/state
+uam_v5_experiment_motion.py
+  -> /uav_arm/target_joint_states
+gazebo_ros_control
+  -> /uav_arm/joint_states
+experiment_data_recorder.py
+  -> data/<timestamp>/<experiment>.bag
+  -> data/<timestamp>/<experiment>_metadata.json
+compute_raw_position_error.py
+  -> raw_position_error.json
+plot_uam_experiment_comparison.py
+  -> CSV 和 PNG 图
 ```
 
-Validate this package by checking:
+## 与顶层任务的关系
 
-- `catkin_make` builds `uav_core_lib`
-- `rosrun uav_control plot_eso_results.py <bag>` starts successfully
-- the plotting scripts can find the expected topics or log patterns
+exp1 和 exp4 的飞行期望值由 `uav_arm_top` 节点发布；本包只负责记录和评价这些期望值是否被跟踪：
 
-### 6. File Map
+- exp1：期望位置为 `(x=0, y=0, z=2.0 m)` 的悬停点。
+- exp4：期望路径为 `z=2.0 m` 高度的正方形，默认边长 `2.0 m`，launch 默认段速度 `0.15 m/s`，角点停留 `3.0 s`。
+- 两个实验中机械臂扰动默认频率均为 `0.5 Hz`，有效评价窗口从 `/experiment/arm_motion_enabled=True` 开始。
 
-- `include/uav_control`: reusable control and trajectory headers
-- `src`: C++ implementations of utility logic
-- `scripts`: data analysis and plotting scripts
-- `scripts/result_2m`, `scripts/result_5m`: stored experiment notes
-
-## 中文
-
-### 1. 概述
-
-`uav_control` 是这个仓库的 ROS 侧工具与分析包，不是当前真正运行在 PX4 内部的主飞控控制器。它的作用是给整个实验链路提供数学工具、轨迹生成器，以及 bag/日志后处理脚本。
-
-### 2. 修改了什么
-
-这个包主要为自定义 PX4 ESO 工作流补了三类能力：
-
-- `ControlUtils`：力到姿态/油门映射、四元数转欧拉角、力限幅、质心计算。
-- `TrajectoryGenerator`：生成悬停、画圆、螺旋、姿态正弦测试等参考轨迹。
-- ROS bag 与 PX4 控制台日志的分析脚本。
-
-这里的关键设计是：主控制闭环放在 PX4 自定义模块里，这个包只保留 ROS 侧的工具和分析职责。
-
-### 3. 关键组成
-
-- `include/uav_control/ControlUtils.hpp`
-  - `forceToAttitudeThrust`
-  - `quaternionToEuler`
-  - `saturateForce`
-  - `calculateCoM`
-- `include/uav_control/TrajectoryGenerator.hpp`
-  - `TrajectoryMode`
-  - `TrajectoryParameters`
-  - `update`
-  - `updateAttitude`
-- `scripts/plot_result.py`
-  - 完整实验 bag 图形分析
-- `scripts/plot_eso_results.py`
-  - 快速查看 ESO 位置/扰动结果
-- `scripts/hover_rate_stats.py`
-  - 从 PX4 控制台日志统计悬停与速率环行为
-- `scripts/plot_result_classDesign.py`
-  - 偏论文风格的绘图版本
-
-### 4. 接口 / 运行入口
-
-- 编译出的库：`uav_core_lib`
-- 安装后的脚本入口：
-  - `rosrun uav_control plot_eso_results.py <bag>`
-- 直接运行脚本：
-  - `python3 scripts/plot_result.py <bag> --start <sec>`
-  - `python3 scripts/hover_rate_stats.py --log <px4.log> ...`
-
-这些脚本主要读取以下数据：
-
-- `/mavros/local_position/pose`
-- `/mavros/setpoint_position/local`
-- `/mavros/imu/data`
-- `/mavros/debug/named_value_float`
-- `/uav_arm/joint_states`
-- `/uav_arm/target_joint_states`
-
-### 5. 如何运行或验证
-
-先编译工作区：
-
-```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-catkin_make
-source devel/setup.bash
-```
-
-后处理示例：
-
-```bash
-python3 src/uav_control/scripts/plot_result.py test_flight.bag --start 15.5
-python3 src/uav_control/scripts/plot_eso_results.py eso_test_01.bag
-python3 src/uav_control/scripts/hover_rate_stats.py --log /tmp/px4.log --start-sec 20 --end-sec 80
-```
-
-验证时重点看：
-
-- `catkin_make` 能编出 `uav_core_lib`
-- `rosrun uav_control plot_eso_results.py <bag>` 可以正常启动
-- 绘图或统计脚本能找到预期话题和日志模式
-
-### 6. 文件索引
-
-- `include/uav_control`：可复用控制与轨迹头文件
-- `src`：C++ 实现
-- `scripts`：分析与绘图脚本
-- `scripts/result_2m`、`scripts/result_5m`：实验记录
+自动调参脚本 `auto_tune_uam_v5_eso.py` 会围绕这些任务运行 fresh bag、调用 `compute_raw_position_error.py` 得到原始位置误差，并将候选参数的接受/拒绝交给外部 tuning memory 记录。

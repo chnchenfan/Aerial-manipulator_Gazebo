@@ -153,6 +153,7 @@ private:
 	matrix::Vector3f _alloc_unallocated_torque{}; /**< 控制分配器未分配力矩缓存（x/y/z） */
 	matrix::Vector<bool, 3> _alloc_sat_pos{}; /**< 轴向正饱和标志缓存 */
 	matrix::Vector<bool, 3> _alloc_sat_neg{}; /**< 轴向负饱和标志缓存 */
+	bool _dyn_ff_enabled{false}; /**< Use attitude aux dynamic feed-forward terms. */
 
 	perf_counter_t	_loop_perf;			/**< loop duration performance counter */
 
@@ -201,10 +202,21 @@ private:
 		(ParamFloat<px4::params::ESO_RATE_BW_Y>) _param_eso_rate_bw_y,
 
 			(ParamFloat<px4::params::ESO_K_BETA>) _param_eso_k_beta,
+			(ParamBool<px4::params::ESO_DYN_FF_EN>) _param_eso_dyn_ff_en,
 			(ParamFloat<px4::params::ESO_MAX_TORQUE>) _param_eso_max_torque,
 			(ParamFloat<px4::params::ESO_RATE_I_SC>) _param_eso_rate_i_scale,
 			(ParamFloat<px4::params::ESO_TAUS_K>) _param_eso_taus_k,
-			(ParamFloat<px4::params::ESO_TAUS_LIM>) _param_eso_taus_lim,
+				(ParamFloat<px4::params::ESO_TAUS_K_R>) _param_eso_taus_k_r,
+				(ParamFloat<px4::params::ESO_TAUS_K_P>) _param_eso_taus_k_p,
+				(ParamFloat<px4::params::ESO_TAUS_K_Y>) _param_eso_taus_k_y,
+				(ParamFloat<px4::params::ESO_TAUS_OBS_R>) _param_eso_taus_obs_r,
+				(ParamFloat<px4::params::ESO_TAUS_OBS_P>) _param_eso_taus_obs_p,
+				(ParamFloat<px4::params::ESO_TAUS_OBS_Y>) _param_eso_taus_obs_y,
+				(ParamFloat<px4::params::ESO_TAUS_CTL_R>) _param_eso_taus_ctl_r,
+				(ParamFloat<px4::params::ESO_TAUS_CTL_P>) _param_eso_taus_ctl_p,
+				(ParamFloat<px4::params::ESO_TAUS_CTL_Y>) _param_eso_taus_ctl_y,
+				(ParamFloat<px4::params::ESO_TAUS_LIM>) _param_eso_taus_lim,
+				(ParamFloat<px4::params::ESO_TAUS_TAU>) _param_eso_taus_tau,
 
 		(ParamFloat<px4::params::ESO_ACRO_R_MAX>) _param_eso_acro_r_max,
 		(ParamFloat<px4::params::ESO_ACRO_P_MAX>) _param_eso_acro_p_max,

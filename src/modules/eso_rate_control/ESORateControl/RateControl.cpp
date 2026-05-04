@@ -141,10 +141,44 @@ void ESORateControl::setTauSScale(float tau_s_scale)
 	}
 }
 
+void ESORateControl::setTauSAxisScale(const Vector3f &tau_s_axis_scale)
+{
+	for (int i = 0; i < 3; i++) {
+		if (PX4_ISFINITE(tau_s_axis_scale(i))) {
+			_tau_s_axis_scale(i) = tau_s_axis_scale(i);
+		}
+	}
+}
+
+void ESORateControl::setTauSObserverAxisScale(const Vector3f &tau_s_obs_axis_scale)
+{
+	for (int i = 0; i < 3; i++) {
+		if (PX4_ISFINITE(tau_s_obs_axis_scale(i))) {
+			_tau_s_obs_axis_scale(i) = tau_s_obs_axis_scale(i);
+		}
+	}
+}
+
+void ESORateControl::setTauSControlAxisScale(const Vector3f &tau_s_ctrl_axis_scale)
+{
+	for (int i = 0; i < 3; i++) {
+		if (PX4_ISFINITE(tau_s_ctrl_axis_scale(i))) {
+			_tau_s_ctrl_axis_scale(i) = tau_s_ctrl_axis_scale(i);
+		}
+	}
+}
+
 void ESORateControl::setTauSLimitNm(float tau_s_limit_nm)
 {
 	if (PX4_ISFINITE(tau_s_limit_nm) && tau_s_limit_nm >= 0.f) {
 		_tau_s_limit_nm = tau_s_limit_nm;
+	}
+}
+
+void ESORateControl::setTauSFilterTimeConstant(float tau_s_filter_tau)
+{
+	if (PX4_ISFINITE(tau_s_filter_tau) && tau_s_filter_tau >= 0.f) {
+		_tau_s_filter_tau = tau_s_filter_tau;
 	}
 }
 
@@ -176,6 +210,8 @@ Vector3f ESORateControl::update(const Vector3f &rate, const Vector3f &rate_sp, c
 
 	const Vector3f omega = rate;
 	const Vector3f omega_r = rate_sp;
+	_last_rate = omega;
+	_last_rate_sp = omega_r;
 
 	// aux 输入做有限性保护，避免上游没发/发 NaN 时污染控制
 	Vector3f omega_r_dot = _omega_r_dot;
@@ -186,13 +222,31 @@ Vector3f ESORateControl::update(const Vector3f &rate, const Vector3f &rate_sp, c
 		if (!PX4_ISFINITE(beta_v(i))) { beta_v(i) = 0.f; }
 		if (!PX4_ISFINITE(tau_s(i))) { tau_s(i) = 0.f; }
 	}
-	Vector3f tau_s_used = tau_s;
+	Vector3f tau_s_base = tau_s;
 	const float tau_s_scale = math::constrain(_tau_s_scale, 0.f, 1.f);
 	const float tau_s_limit_nm = math::max(_tau_s_limit_nm, 0.f);
 	for (int i = 0; i < 3; i++) {
-		tau_s_used(i) = math::constrain(tau_s_used(i), -tau_s_limit_nm, tau_s_limit_nm);
+		tau_s_base(i) = math::constrain(tau_s_base(i), -tau_s_limit_nm, tau_s_limit_nm);
 	}
-	tau_s_used *= tau_s_scale;
+	tau_s_base *= tau_s_scale;
+	tau_s_base = tau_s_base.emult(_tau_s_axis_scale);
+
+	if (landed || tau_s_scale <= FLT_EPSILON || tau_s_limit_nm <= FLT_EPSILON) {
+		_tau_s_filtered.zero();
+		_tau_s_filter_valid = false;
+		tau_s_base.zero();
+
+	} else if (!_tau_s_filter_valid || !PX4_ISFINITE(dt) || dt <= 1e-6f || _tau_s_filter_tau <= FLT_EPSILON) {
+		_tau_s_filtered = tau_s_base;
+		_tau_s_filter_valid = true;
+
+	} else {
+		const float alpha = math::constrain(dt / (_tau_s_filter_tau + dt), 0.f, 1.f);
+		_tau_s_filtered += (tau_s_base - _tau_s_filtered) * alpha;
+		tau_s_base = _tau_s_filtered;
+	}
+	const Vector3f tau_s_obs = tau_s_base.emult(_tau_s_obs_axis_scale);
+	const Vector3f tau_s_ctrl = tau_s_base.emult(_tau_s_ctrl_axis_scale);
 
 		// 速率误差统一定义为 e_omega = ω_r - ω（与积分通道符号一致）
 		const Vector3f e_omega = omega_r - omega;
@@ -204,19 +258,22 @@ Vector3f ESORateControl::update(const Vector3f &rate, const Vector3f &rate_sp, c
 	if (landed) {
 		_eso.reset();
 		_last_torque.zero();
+		_tau_s_filtered.zero();
+		_tau_s_filter_valid = false;
 	}
 
-	// ESO 名义输入：u = M^{-1}(τ_last - ω×Mω + tau_s_used)
-	const Vector3f u_nominal = _inertia_inv * (_last_torque - coriolis_term + tau_s_used);
+	// ESO 名义输入：u = M^{-1}(τ_last - ω×Mω + tau_s_obs)
+	const Vector3f u_nominal = _inertia_inv * (_last_torque - coriolis_term + tau_s_obs);
 	const Vector3f disturbance_hat = _eso.update(omega, u_nominal, dt);
 	_last_tau_s_raw = tau_s;
-	_last_tau_s_used = tau_s_used;
+	_last_tau_s_used = tau_s_ctrl;
 	_last_omega_r_dot = omega_r_dot;
 	_last_disturbance_hat = disturbance_hat;
 
-	// Debug: print actual vs estimated rate (and disturbance if valid), throttled
+	// Debug hook kept disabled during automated tuning to avoid perturbing SITL timing with high-volume logs.
+	static constexpr bool kRateDebugPrintEnabled = false;
 	static hrt_abstime last_print{0};
-	if (hrt_elapsed_time(&last_print) > 2000000) {//2秒一次
+	if (kRateDebugPrintEnabled && hrt_elapsed_time(&last_print) > 2000000) {//2秒一次
 		last_print = hrt_absolute_time();
 
 		const Vector3f est_rate = _eso.getEstimatedAngularVelocity();
@@ -245,19 +302,22 @@ Vector3f ESORateControl::update(const Vector3f &rate, const Vector3f &rate_sp, c
 		// 采用“小积分”策略：比例由参数 ESO_RATE_I_SC 配置
 		const Vector3f integral_term = _rate_int * _integral_scale;
 		const Vector3f beta_term = -beta_v * k_beta;
-		const Vector3f torque_physical = inertia_term + coriolis_term + feedback_term + beta_term + integral_term - tau_s_used;
+		const Vector3f torque_physical = inertia_term + coriolis_term + feedback_term + beta_term + integral_term - tau_s_ctrl;
 		// 缓存各力矩分量，供外层低频调试打印分析“谁在主导”
 		_last_inertia_term = inertia_term;
 		_last_feedback_term = feedback_term;
 		_last_integral_term = integral_term;
 		_last_beta_term = beta_term;
-		_last_torque = torque_physical;
 
 	// 归一化输出到 [-1, 1]（与 PX4 混控接口一致）
 	Vector3f torque_norm{};
 	for (int i = 0; i < 3; i++) {
 		torque_norm(i) = math::constrain(torque_physical(i) / max_torque, -1.f, 1.f);
 	}
+
+	// ESO 的下一周期名义输入必须使用可实现力矩，而不是饱和前的期望力矩。
+	// 否则饱和时观测器会把“没有真正施加的力矩”当作输入，进而把误差估成巨大扰动。
+	_last_torque = torque_norm * max_torque;
 
 	// 目前不再使用 legacy PID 的 I/D/FF 通道，保持 updateIntegral 供后续可选启用。
 	return torque_norm;
@@ -314,4 +374,19 @@ void ESORateControl::getESORateControlStatus(rate_ctrl_status_s &rate_ctrl_statu
 	rate_ctrl_status.rollspeed_integ = _rate_int(0);
 	rate_ctrl_status.pitchspeed_integ = _rate_int(1);
 	rate_ctrl_status.yawspeed_integ = _rate_int(2);
+
+	const Vector3f rate_hat = _eso.getEstimatedAngularVelocity();
+	const Vector3f rate_error = _last_rate - rate_hat;
+
+	for (int i = 0; i < 3; i++) {
+		rate_ctrl_status.eso_rate[i] = _last_rate(i);
+		rate_ctrl_status.eso_rate_sp[i] = _last_rate_sp(i);
+		rate_ctrl_status.eso_rate_hat[i] = rate_hat(i);
+		rate_ctrl_status.eso_rate_error[i] = rate_error(i);
+		rate_ctrl_status.eso_disturbance_hat[i] = _last_disturbance_hat(i);
+		rate_ctrl_status.eso_tau_s_raw[i] = _last_tau_s_raw(i);
+		rate_ctrl_status.eso_tau_s_used[i] = _last_tau_s_used(i);
+		rate_ctrl_status.eso_omega_r_dot[i] = _last_omega_r_dot(i);
+		rate_ctrl_status.eso_torque[i] = _last_torque(i);
+	}
 }

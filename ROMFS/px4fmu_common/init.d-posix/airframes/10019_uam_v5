@@ -12,6 +12,19 @@
 if [ $AUTOCNF = yes ]; then
 	param set MAV_TYPE 2
 	param set ESO_ARM_MODEL 1
+	param set ESO_DYN_FF_EN 0
+	param set COM_RCL_EXCEPT 4
+	param set COM_RC_IN_MODE 1
+	param set COM_ARM_IMU_ACC 1.0
+	param set MPC_THR_HOVER 0.73
+	param set MPC_USE_HTE 0
+	param set EKF2_MULTI_IMU 1
+	param set SENS_IMU_MODE 1
+	param set EKF2_MULTI_MAG 1
+	param set CAL_ACC1_PRIO 0
+	param set CAL_ACC2_PRIO 0
+	param set CAL_GYRO1_PRIO 0
+	param set CAL_GYRO2_PRIO 0
 fi
 
 . ${R}etc/init.d/rc.mc_defaults

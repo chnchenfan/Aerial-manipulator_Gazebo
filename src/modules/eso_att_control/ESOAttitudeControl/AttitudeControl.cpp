@@ -174,8 +174,6 @@ matrix::Vector3f ESOAttitudeControl::update(const Quatf &q, const Vector3f &omeg
 	}
 
 	// 8. 数值求导（供速率环使用），避免 dt 异常
-	// TODO(后续提醒)：omega_r_dot 目前是原始差分，实飞若出现噪声放大/力矩抖动，
-	// 可考虑加低通滤波、限幅或更稳健的微分器。
 	if (!_omega_r_prev_valid) {
 		// 首次运行/刚复位：对齐上一周期 omega_r，导数输出置零，避免导数尖峰
 		_omega_r_dot.zero();
@@ -183,7 +181,19 @@ matrix::Vector3f ESOAttitudeControl::update(const Quatf &q, const Vector3f &omeg
 		_omega_r_prev_valid = true;
 
 	} else if (PX4_ISFINITE(dt) && dt > 1e-4f) {
-		_omega_r_dot = (omega_r - _omega_r_prev) / dt;
+		constexpr float omega_r_dot_lpf_tau = 0.02f;
+		constexpr float omega_r_slew_time = 0.1f;
+		const float alpha = math::constrain(dt / (omega_r_dot_lpf_tau + dt), 0.f, 1.f);
+		const Vector3f omega_r_dot_raw = (omega_r - _omega_r_prev) / dt;
+
+		for (int i = 0; i < 3; i++) {
+			const float max_omega_r_dot = math::max(_rate_limit(i) / omega_r_slew_time, 1.f);
+			const float omega_r_dot_limited = PX4_ISFINITE(omega_r_dot_raw(i))
+							 ? math::constrain(omega_r_dot_raw(i), -max_omega_r_dot, max_omega_r_dot)
+							 : 0.f;
+			_omega_r_dot(i) += alpha * (omega_r_dot_limited - _omega_r_dot(i));
+		}
+
 		_omega_r_prev = omega_r;
 
 	} else {

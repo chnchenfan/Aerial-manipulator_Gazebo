@@ -428,8 +428,9 @@ ESOMulticopterAttitudeControl::Run()
 
 					_v_rates_sp_pub.publish(v_rates_sp);
 
-					// Bridge to ROS via named_value_float (Target Attitude)
-					if (_attitude_setpoint_last_valid) {
+					// Keep high-volume named-value debug publishing disabled during autotune.
+					static constexpr bool kPublishAttDebugKeyValues = false;
+					if (kPublishAttDebugKeyValues && _attitude_setpoint_last_valid) {
 						const Eulerf euler_sp(Quatf(_attitude_setpoint_last.q_d));
 
 						auto publish_key_value = [&](const char* key, float value) {

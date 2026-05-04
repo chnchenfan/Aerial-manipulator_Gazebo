@@ -1,247 +1,191 @@
 # uav_arm_top
 
-## English
+`uav_arm_top` 是 UAM V5 exp1/exp4 的顶层任务包。它负责启动 PX4 SITL、Gazebo、MAVROS、UAM V5 机械臂控制器、机械臂状态桥接节点，以及两个 offboard 飞行任务节点。
 
-### 1. Overview
+## 文件结构
 
-`uav_arm_top` is the top-level demo package for this repository. It ties together PX4 SITL, Gazebo, MAVROS, the ROS arm controllers, and the offboard demo nodes for the two supported platforms:
+```text
+uav_arm_top/
+├── CMakeLists.txt
+│   └── 编译 offboard 任务节点，安装 `uam_v5_arm_joint_state_bridge.py`。
+├── package.xml
+│   └── 声明 roscpp、rospy、geometry_msgs、sensor_msgs、std_msgs、mavros_msgs、uav_control、arm_controller 等依赖。
+├── launch/
+│   ├── arm_pid_SITL_Gazebo_uam_v5.launch
+│   │   └── exp1/exp4 共同使用的 UAM V5 SITL 基础启动链路。
+│   ├── exp1_hover_disturbance_uam_v5.launch
+│   │   └── exp1 悬停抗扰实验顶层 launch。
+│   ├── exp4_square_tracking_uam_v5.launch
+│   │   └── exp4 方形轨迹跟踪实验顶层 launch。
+│   ├── arm_pid_SITL_Gazebo.launch
+│   │   └── 旧 uav_arm_v4 启动文件；exp1/exp4 不使用。
+│   └── circle_offboard_SITL_Gazebo.launch
+│       └── 旧圆形轨迹 demo；exp1/exp4 不使用。
+├── src/
+│   ├── eso_hover_disturbance_offboard_node.cpp
+│   │   └── exp1 飞行任务节点，发布固定悬停位置期望值。
+│   ├── eso_square_arm_experiment_node.cpp
+│   │   └── exp4 飞行任务节点，发布方形轨迹位置期望值。
+│   ├── eso_offboard_node.cpp
+│   │   └── 旧 offboard demo；exp1/exp4 不使用。
+│   ├── eso_offboard_2_5_node.cpp
+│   │   └── 旧 2m/5m 高度 demo；exp1/exp4 不使用。
+│   ├── eso_square_offboard_node.cpp
+│   │   └── 旧方形轨迹 demo；exp1/exp4 不使用。
+│   └── eso_circle_offboard_node.cpp
+│       └── 旧圆形轨迹 demo；exp1/exp4 不使用。
+├── scripts/
+│   ├── uam_v5_arm_joint_state_bridge.py
+│   │   └── 把 ROS 关节状态转换为 MAVLink `NAMED_VALUE_FLOAT`，供 PX4 ESO 模块读取。
+│   ├── BRIDGE_CHAIN_UAM_V5.md
+│   │   └── UAM V5 关节状态桥接链路说明。
+│   ├── SIM_WORKFLOW_UAV_ARM_V4_UAM_V5.md
+│   │   └── 旧仿真流程记录，包含 v4 和 v5。
+│   ├── MC_CONTROL_CONFLICT_UAM_V5.md
+│   │   └── UAM V5 与 PX4 multicopter 控制模块冲突排查记录。
+│   ├── OFFBOARD_RCL_DIFFERENCE_V4_V5.md
+│   │   └── v4/v5 offboard 参数差异记录。
+│   └── GIT_WORKFLOW_PX4_FIRMWARE_CLEAN.md
+│       └── 本仓库工作流记录。
+├── data/
+│   └── 本地实验输出目录，已加入 `.gitignore`，不提交。
+├── auto_tune_data/
+│   └── 自动调参 fresh bag、metrics 和 Optuna DB 输出目录，已加入 `.gitignore`，不提交。
+├── CIRCLE_TRAJECTORY_GUIDE.md
+│   └── 旧圆形轨迹说明；exp1/exp4 不使用。
+└── README.md
+    └── 当前文件。
+```
 
-- `uav_arm_v4`
-- `uam_v5`
+## Launch 说明
 
-### 2. What Was Modified
+### `launch/arm_pid_SITL_Gazebo_uam_v5.launch`
 
-This package was added to expose the modified system through reproducible launch and demo entry points:
+功能：启动 UAM V5 的基础仿真链路，不单独定义 exp1/exp4 任务。
 
-- one integrated launch for `uav_arm_v4`,
-- one integrated launch for `uam_v5`,
-- one circle-demo launch,
-- four offboard demo nodes for hover and trajectory tests,
-- one ROS-to-MAVLink bridge script used specifically by the `uam_v5` chain.
+涉及文件：
 
-### 3. Key Components
-
-#### Launch Files
-
-- `launch/arm_pid_SITL_Gazebo.launch`
-  - `uav_arm_v4` full-stack launch
-  - loads `uav_arm_v4.urdf.xacro`
-  - starts PX4 SITL + Gazebo + MAVROS + `arm_controller/controller_bringup.launch`
-- `launch/arm_pid_SITL_Gazebo_uam_v5.launch`
-  - `uam_v5` full-stack launch
-  - loads `uam_v5.urdf.xacro`
-  - starts PX4 SITL + Gazebo + MAVROS + `controller_bringup_uam_v5.launch`
-  - also starts `uam_v5_arm_joint_state_bridge.py`
-- `launch/circle_offboard_SITL_Gazebo.launch`
-  - `uav_arm_v4` full launch plus `eso_circle_offboard_node`
-
-#### Demo Nodes
-
-- `eso_offboard_node`
-  - fixed-point offboard setpoint publisher
-- `eso_offboard_2_5_node`
-  - staged altitude demo used for `uam_v5`
-- `eso_square_offboard_node`
-  - square trajectory publisher
-- `eso_circle_offboard_node`
-  - circle trajectory publisher with configurable radius, center, altitude, and waypoint count
-
-#### Bridge Script
-
+- `uav_arm_model/urdf/uam_v5.urdf.xacro`
+- `Tools/sitl_gazebo/models/uam_v5/uam_v5.sdf`
+- `arm_controller/launch/controller_bringup_uam_v5.launch`
+- `arm_controller/config/joint_pid_uam_v5.yaml`
 - `scripts/uam_v5_arm_joint_state_bridge.py`
-  - subscribes to ROS joint states
-  - publishes MAVLink named values to `/mavlink/to`
-  - provides the `uam_v5` joint-state feed that PX4 reconstructs through `arm_joint_bridge`
+- PX4 上游 `px4/launch/mavros_posix_sitl.launch`
 
-### 4. Interfaces / Launch or Runtime Entry Points
+信息流：
 
-Main launch commands:
-
-```bash
-roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch
-roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
-roslaunch uav_arm_top circle_offboard_SITL_Gazebo.launch
+```text
+arm_pid_SITL_Gazebo_uam_v5.launch
+  -> load /robot_description from uam_v5.urdf.xacro
+  -> include px4/launch/mavros_posix_sitl.launch with vehicle=uam_v5
+  -> Gazebo loads Tools/sitl_gazebo/models/uam_v5/uam_v5.sdf
+  -> include arm_controller/controller_bringup_uam_v5.launch
+  -> start uam_v5_arm_joint_state_bridge.py
 ```
 
-Main demo commands:
+### `launch/exp1_hover_disturbance_uam_v5.launch`
 
-```bash
-rosrun uav_arm_top eso_offboard_node
-rosrun uav_arm_top eso_offboard_2_5_node
-rosrun uav_arm_top eso_square_offboard_node
-rosrun uav_arm_top eso_circle_offboard_node
+功能：启动悬停抗扰实验。该 launch 先 include `arm_pid_SITL_Gazebo_uam_v5.launch`，再启动 exp1 offboard 节点和机械臂扰动节点。
+
+涉及文件：
+
+- `launch/exp1_hover_disturbance_uam_v5.launch`
+- `launch/arm_pid_SITL_Gazebo_uam_v5.launch`
+- `src/eso_hover_disturbance_offboard_node.cpp`
+- `arm_controller/scripts/uam_v5_experiment_motion.py`
+- `uav_control/scripts/experiment_data_recorder.py`，需要另一个终端手动运行或由调参脚本启动
+- `uav_control/scripts/compute_raw_position_error.py`，用于后处理指标
+
+信息流：
+
+```text
+eso_hover_disturbance_offboard_node
+  -> /mavros/setpoint_position/local = fixed hover setpoint
+  -> /mavros/set_mode, /mavros/cmd/arming
+  -> /experiment/arm_motion_enabled after reach/hold condition
+uam_v5_experiment_motion.py
+  <- /experiment/arm_motion_enabled
+  -> /uav_arm/<joint>_position_controller/command
+  -> /uav_arm/target_joint_states
+uam_v5_arm_joint_state_bridge.py
+  <- /uav_arm/joint_states
+  -> /mavlink/to NAMED_VALUE_FLOAT
+PX4 ESO modules
+  <- MAVLink named values and vehicle state
+  -> motor/attitude/rate/position control
 ```
 
-Important runtime difference:
+任务参数：
 
-- `uav_arm_v4` launch path uses ROS arm control directly.
-- `uam_v5` launch path adds `uam_v5_arm_joint_state_bridge.py`, because the PX4 ESO modules need arm joint state feedback inside PX4 and the model is wired through the named-value bridge chain.
+- 飞行任务：起飞后悬停，机械臂开始正弦运动以形成抗扰测试。
+- 默认位置期望值：`x=0.0 m, y=0.0 m, z=2.0 m`。
+- 默认激活条件：高度达到 `1.9 m`，距离目标小于 `0.20 m`，保持 `1.0 s` 后发布 `/experiment/arm_motion_enabled=True`。
+- 机械臂扰动：默认 `0.5 Hz`，由 `uam_v5_experiment_motion.py` 发布。
+- 飞行 setpoint 发布频率：`20 Hz`。
 
-### 5. How to Run or Validate
+### `launch/exp4_square_tracking_uam_v5.launch`
 
-Prepare the environment:
+功能：启动方形轨迹跟踪实验。该 launch 先 include `arm_pid_SITL_Gazebo_uam_v5.launch`，再启动 exp4 offboard 节点和机械臂扰动节点。
+
+涉及文件：
+
+- `launch/exp4_square_tracking_uam_v5.launch`
+- `launch/arm_pid_SITL_Gazebo_uam_v5.launch`
+- `src/eso_square_arm_experiment_node.cpp`
+- `arm_controller/scripts/uam_v5_experiment_motion.py`
+- `uav_control/scripts/experiment_data_recorder.py`，需要另一个终端手动运行或由调参脚本启动
+- `uav_control/scripts/compute_raw_position_error.py`，用于后处理指标
+
+信息流：
+
+```text
+eso_square_arm_experiment_node
+  -> /mavros/setpoint_position/local = square trajectory setpoint
+  -> /mavros/set_mode, /mavros/cmd/arming
+  -> /experiment/arm_motion_enabled when first corner is reached
+uam_v5_experiment_motion.py
+  <- /experiment/arm_motion_enabled
+  -> joint position controller commands
+PX4 + MAVROS
+  <- position setpoints
+  -> /mavros/local_position/pose and /mavros/state
+experiment_data_recorder.py
+  <- pose, setpoint, joint state, enable marker
+  -> bag + metadata
+```
+
+任务参数：
+
+- 飞行任务：在 `z=2.0 m` 高度跟踪水平正方形路径，同时机械臂做正弦扰动。
+- 默认路径：`(0,0,2)` -> `(2,0,2)` -> `(2,2,2)` -> `(0,2,2)` -> `(0,0,2)`。
+- 默认边长：`2.0 m`。
+- launch 默认路径速度：`0.15 m/s`。
+- 节点内部最小速度保护：`path_speed_mps >= 0.05 m/s`。
+- 默认角点停留：`3.0 s`。
+- 默认平滑段：`smooth_segments=false`，即线性插值。
+- 默认激活条件：高度达到 `1.9 m`，距离首个角点小于 `0.20 m`，保持 `1.0 s` 后发布 `/experiment/arm_motion_enabled=True`。
+- 机械臂扰动：默认 `0.5 Hz`。
+- 飞行 setpoint 发布频率：`20 Hz`。
+
+## 常用运行方式
 
 ```bash
 source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
+roslaunch uav_arm_top exp1_hover_disturbance_uam_v5.launch
 ```
 
-Launch the `uav_arm_v4` demo:
-
-```bash
-roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch
-rosrun uav_arm_top eso_offboard_node
-rosrun arm_controller joint_position_commander.py
-```
-
-Launch the `uam_v5` demo:
-
-```bash
-roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
-rosrun uav_arm_top eso_offboard_2_5_node
-rosrun arm_controller joint_position_commander_uam_v5.py
-```
-
-Trajectory demos:
-
-```bash
-rosrun uav_arm_top eso_square_offboard_node
-rosrun uav_arm_top eso_circle_offboard_node
-```
-
-Validation checks:
-
-- the integrated launch starts PX4 SITL, Gazebo, MAVROS, and the arm controller bring-up,
-- `uav_arm_v4` and `uam_v5` load the correct URDF and airframe,
-- the demo nodes can switch to `OFFBOARD` and arm,
-- `uam_v5_arm_joint_state_bridge.py` publishes without MAVLink topic errors.
-
-### 6. File Map
-
-- `launch`: top-level experiment launches
-- `src`: offboard demo nodes
-- `scripts/uam_v5_arm_joint_state_bridge.py`: `uam_v5` joint-state bridge
-- `scripts/*.md`: supporting workflow notes for SITL and bridge debugging
-
-## 中文
-
-### 1. 概述
-
-`uav_arm_top` 是这个仓库的顶层 demo 包，负责把 PX4 SITL、Gazebo、MAVROS、ROS 机械臂控制器，以及 offboard 演示节点串成一套可直接运行的实验入口。
-
-它覆盖两种平台：
-
-- `uav_arm_v4`
-- `uam_v5`
-
-### 2. 修改了什么
-
-这个包的作用就是把你改动后的整套系统变成可复现的顶层入口：
-
-- 为 `uav_arm_v4` 提供一套完整 launch，
-- 为 `uam_v5` 提供一套完整 launch，
-- 为圆轨迹提供单独 launch，
-- 提供四个 offboard demo 节点，
-- 为 `uam_v5` 增加一条专用的 ROS 到 MAVLink 关节桥接脚本。
-
-### 3. 关键组成
-
-#### Launch 文件
-
-- `launch/arm_pid_SITL_Gazebo.launch`
-  - `uav_arm_v4` 全链路启动文件
-  - 加载 `uav_arm_v4.urdf.xacro`
-  - 启动 PX4 SITL + Gazebo + MAVROS + `arm_controller/controller_bringup.launch`
-- `launch/arm_pid_SITL_Gazebo_uam_v5.launch`
-  - `uam_v5` 全链路启动文件
-  - 加载 `uam_v5.urdf.xacro`
-  - 启动 PX4 SITL + Gazebo + MAVROS + `controller_bringup_uam_v5.launch`
-  - 额外启动 `uam_v5_arm_joint_state_bridge.py`
-- `launch/circle_offboard_SITL_Gazebo.launch`
-  - 在 `uav_arm_v4` 完整启动基础上直接带起 `eso_circle_offboard_node`
-
-#### Demo 节点
-
-- `eso_offboard_node`
-  - 固定点 offboard 设定值发布器
-- `eso_offboard_2_5_node`
-  - 面向 `uam_v5` 的分阶段高度实验节点
-- `eso_square_offboard_node`
-  - 方形轨迹发布器
-- `eso_circle_offboard_node`
-  - 圆轨迹发布器，可配置半径、圆心、高度和航点数
-
-#### 桥接脚本
-
-- `scripts/uam_v5_arm_joint_state_bridge.py`
-  - 订阅 ROS 关节状态
-  - 向 `/mavlink/to` 发布 MAVLink named value
-  - 为 `uam_v5` 提供 PX4 侧 `arm_joint_bridge` 所需的关节反馈
-
-### 4. 接口 / Launch 与运行入口
-
-主要 launch 命令：
-
-```bash
-roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch
-roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
-roslaunch uav_arm_top circle_offboard_SITL_Gazebo.launch
-```
-
-主要 demo 命令：
-
-```bash
-rosrun uav_arm_top eso_offboard_node
-rosrun uav_arm_top eso_offboard_2_5_node
-rosrun uav_arm_top eso_square_offboard_node
-rosrun uav_arm_top eso_circle_offboard_node
-```
-
-关键差异：
-
-- `uav_arm_v4` 的顶层链路直接使用 ROS 机械臂控制。
-- `uam_v5` 的顶层链路会额外带起 `uam_v5_arm_joint_state_bridge.py`，因为 PX4 内部 ESO 模块需要机械臂关节状态，而这套模型走的是 named-value 桥接链。
-
-### 5. 如何运行或验证
-
-先准备环境：
+或：
 
 ```bash
 source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
+roslaunch uav_arm_top exp4_square_tracking_uam_v5.launch
 ```
 
-启动 `uav_arm_v4` demo：
+另一个终端录制：
 
 ```bash
-roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch
-rosrun uav_arm_top eso_offboard_node
-rosrun arm_controller joint_position_commander.py
+source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
+rosrun uav_control experiment_data_recorder.py _experiment_name:=exp1_hover_disturbance_uam_v5
 ```
 
-启动 `uam_v5` demo：
-
-```bash
-roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
-rosrun uav_arm_top eso_offboard_2_5_node
-rosrun arm_controller joint_position_commander_uam_v5.py
-```
-
-轨迹实验：
-
-```bash
-rosrun uav_arm_top eso_square_offboard_node
-rosrun uav_arm_top eso_circle_offboard_node
-```
-
-验证时重点看：
-
-- 顶层 launch 能正确拉起 PX4 SITL、Gazebo、MAVROS 和 arm controller，
-- `uav_arm_v4` 与 `uam_v5` 分别加载了正确的 URDF 和 airframe，
-- demo 节点能够进入 `OFFBOARD` 并解锁，
-- `uam_v5_arm_joint_state_bridge.py` 发布时不出现 MAVLink 话题错误。
-
-### 6. 文件索引
-
-- `launch`：顶层实验启动文件
-- `src`：offboard demo 节点
-- `scripts/uam_v5_arm_joint_state_bridge.py`：`uam_v5` 关节桥接脚本
-- `scripts/*.md`：SITL 和桥接调试说明
+录制输出默认写入 `ESO_paper_reproduction/src/uav_arm_top/data/<timestamp>/`。该目录是本地实验产物，已加入 `.gitignore`。

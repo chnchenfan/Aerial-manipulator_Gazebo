@@ -10,8 +10,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  rosbag
   std_msgs
   geometry_msgs
+  sensor_msgs
   mavros_msgs
   tf2_ros
   tf
@@ -25,7 +27,7 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES uav_core_lib
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs mavros_msgs tf2_ros
+  CATKIN_DEPENDS roscpp rospy rosbag std_msgs geometry_msgs sensor_msgs mavros_msgs tf2_ros
   # 注意：为了避免之前的 CMake Warning，通常不需要在这里写 DEPENDS Eigen3
   # 只要在下面的 include_directories 里包含了 EIGEN3_INCLUDE_DIRS 即可
 )
@@ -74,6 +76,9 @@ target_link_libraries(uav_core_lib
 
 ## 安装 Python 脚本，便于 rosrun 调用
 catkin_install_python(PROGRAMS
-  scripts/plot_eso_results.py
+  scripts/experiment_data_recorder.py
+  scripts/plot_uam_experiment_comparison.py
+  scripts/compute_raw_position_error.py
+  scripts/auto_tune_uam_v5_eso.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

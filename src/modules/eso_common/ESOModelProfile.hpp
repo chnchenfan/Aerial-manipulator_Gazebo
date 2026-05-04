@@ -40,18 +40,18 @@ struct DynamicsProfile {
 };
 
 static constexpr DynamicsProfile kUavArmV4Profile{
-	1.289f,
-	{-0.01f, 0.0f, 0.161f},
-	{0.016f, 0.016f, 0.016f},
-	{0.045f, 0.045f, 0.08f},
-	true
+	1.289f,                         //mass_total
+	{-0.01f, 0.0f, 0.161f},         //com
+	{0.016f, 0.016f, 0.016f},	//arm_inertia_diag
+	{0.045f, 0.045f, 0.08f},	//body_inertia_diag
+	true				//use_dynamic_arm_model
 };
 
 static constexpr DynamicsProfile kUamV5Profile{
-	2.57f,
-	{0.04517874f, -0.00408382f, 0.13967335f},
-	{0.00756734f, 0.02004877f, 0.01403721f},
-	{0.02601f, 0.02942848f, 0.04177777f},
+	4.8548f,
+	{0.00405203f, 0.0f, 0.06556744f},// UAM V5 SDF is FLU/Z-up; controller model uses PX4 body FRD.
+	{0.00842308f, 0.04709706f, 0.04006098f},
+	{0.049436f, 0.052665f, 0.086619f},
 	true
 };
 

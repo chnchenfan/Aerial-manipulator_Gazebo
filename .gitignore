@@ -113,3 +113,11 @@ ESO_paper_reproduction/.catkin_tools/
 ESO_paper_reproduction/build/
 ESO_paper_reproduction/devel/
 ESO_paper_reproduction/install/
+
+# UAM V5 local experiment artifacts and private notes
+.codex
+/ESO-Based_Robust_and_High-Precision_Tracking_Control_for_Aerial_Manipulation.pdf
+ESO_paper_reproduction/src/uav_arm_top/auto_tune_data/
+ESO_paper_reproduction/src/uav_arm_top/data/
+ESO_paper_reproduction/uam_v5_tuning_memory/
+Tools/sitl_gazebo/models/p600/

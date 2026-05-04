@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import rospy
+import math
 from sensor_msgs.msg import JointState
 from mavros_msgs.msg import Mavlink
 from mavros.mavlink import convert_to_rosmsg
@@ -22,6 +23,11 @@ class UamV5ArmJointStateBridge:
             float(rospy.get_param("~joint_state_timeout", 0.2))
         )
         self.mavlink_topic = rospy.get_param("~mavlink_topic", "/mavlink/to")
+        self.position_offsets = {
+            "arm_joint1": float(rospy.get_param("~arm_joint1_position_offset", -math.pi)),
+            "arm_joint2": float(rospy.get_param("~arm_joint2_position_offset", 1.5 * math.pi)),
+            "left_hand_joint": float(rospy.get_param("~left_hand_position_offset", 0.0)),
+        }
 
         self._mavlink = mavlink1.MAVLink(
             None,
@@ -61,12 +67,15 @@ class UamV5ArmJointStateBridge:
 
         for joint in self.REQUIRED_JOINTS:
             idx = joint_to_index[joint]
-            self._joint_positions[joint] = (
-                msg.position[idx] if idx < len(msg.position) else 0.0
-            )
-            self._joint_velocities[joint] = (
-                msg.velocity[idx] if idx < len(msg.velocity) else 0.0
-            )
+            raw_position = msg.position[idx] if idx < len(msg.position) else 0.0
+            raw_velocity = msg.velocity[idx] if idx < len(msg.velocity) else 0.0
+
+            if not math.isfinite(raw_position) or not math.isfinite(raw_velocity):
+                self._joint_state_complete = False
+                return
+
+            self._joint_positions[joint] = raw_position - self.position_offsets[joint]
+            self._joint_velocities[joint] = raw_velocity
 
         self._latest_stamp = msg.header.stamp if msg.header.stamp != rospy.Time() else rospy.Time.now()
 
@@ -77,6 +86,8 @@ class UamV5ArmJointStateBridge:
         return (now - self._latest_stamp) <= self.timeout
 
     def _publish_named_value(self, key: str, value: float, now: rospy.Time) -> None:
+        if not math.isfinite(value):
+            value = 0.0
         time_boot_ms = int(now.to_sec() * 1000.0) & 0xFFFFFFFF
         mav_msg = self._mavlink.named_value_float_encode(
             time_boot_ms, key.encode("ascii"), float(value)

@@ -16,3 +16,13 @@ float32 yaw_acceptance			# NaN if not set
 float32 altitude_acceptance		# the optimal vertical distance to a waypoint to switch to the next
 
 uint8 type
+
+# ESO position-loop diagnostics. Populated by eso_pos_control, left zero by legacy publishers.
+float32[3] eso_pos
+float32[3] eso_pos_hat
+float32[3] eso_pos_error
+float32[3] eso_vel
+float32[3] eso_vel_hat
+float32[3] eso_vel_error
+float32[3] eso_disturbance_hat
+float32[3] eso_input

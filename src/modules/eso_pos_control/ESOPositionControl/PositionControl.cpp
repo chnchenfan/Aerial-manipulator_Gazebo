@@ -271,6 +271,9 @@ void ESOPositionControl::_velocityControl(const float dt)
 	// 将机体坐标系下的离心力转到 NED 系
 	// 您的代码逻辑是：a_f = R * centrifugal * (-1.0)
 	Vector3f a_f_ned = _attitude.rotateVector(centrifugal_body) * (-1.0f);
+	if (!_dyn_ff_enabled) {
+		a_f_ned.zero();
+	}
 
 	// --- 3. 计算期望加速度 (Backstepping Control Law) ---
 	// 原公式: u = acc_ref - Kv * vel_err - dist - a_f - g

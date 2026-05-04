@@ -120,6 +120,8 @@ public:
 	 */
 	void setAttitude(const matrix::Quatf &att) { _attitude = att; }
 
+	void setDynamicsFeedforwardEnabled(bool enabled) { _dyn_ff_enabled = enabled; }
+
 //=================================---- 限制接口 ----=============================================//
 	/** 设置速度限制，把外部的值传递进来，命名为内部的变量名
 	 * Set the maximum velocity to execute with feed forward and position control
@@ -258,6 +260,7 @@ private:
 	matrix::Vector3f _body_rate{};   // 机体角速度
    	matrix::Vector3f _sys_com_pos{}; // 质心偏移
     	matrix::Quatf    _attitude{1.f, 0.f, 0.f, 0.f};    // 当前姿态四元数
+	bool _dyn_ff_enabled{false}; ///< Enable model-based dynamic feed-forward terms.
 
 	// 外部类
 	// Extended State Observer

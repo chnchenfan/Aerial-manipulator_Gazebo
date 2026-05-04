@@ -1,0 +1,45 @@
+<launch>
+  <arg name="namespace" default="uav_arm"/>
+  <arg name="altitude" default="2.0"/>
+  <arg name="side_length" default="2.0"/>
+  <arg name="corner_hold_s" default="3.0"/>
+  <arg name="path_speed_mps" default="0.15"/>
+  <arg name="activation_altitude_m" default="1.9"/>
+  <arg name="activation_hold_s" default="1.0"/>
+  <arg name="startup_delay_s" default="0.0"/>
+  <arg name="static_validation_delay_s" default="-1.0"/>
+  <arg name="static_validation_reach_m" default="-1.0"/>
+  <arg name="smooth_segments" default="false"/>
+  <arg name="frequency_hz" default="0.5"/>
+  <arg name="gui" default="true"/>
+
+  <include file="$(find uav_arm_top)/launch/arm_pid_SITL_Gazebo_uam_v5.launch">
+    <arg name="namespace" value="$(arg namespace)"/>
+    <arg name="gui" value="$(arg gui)"/>
+  </include>
+
+  <node pkg="uav_arm_top"
+        type="eso_square_arm_experiment_node"
+        name="eso_square_arm_experiment"
+        output="screen">
+    <param name="altitude" value="$(arg altitude)"/>
+    <param name="side_length" value="$(arg side_length)"/>
+    <param name="corner_hold_s" value="$(arg corner_hold_s)"/>
+    <param name="path_speed_mps" value="$(arg path_speed_mps)"/>
+    <param name="activation_altitude_m" value="$(arg activation_altitude_m)"/>
+    <param name="activation_hold_s" value="$(arg activation_hold_s)"/>
+    <param name="startup_delay_s" value="$(arg startup_delay_s)"/>
+    <param name="static_validation_delay_s" value="$(arg static_validation_delay_s)"/>
+    <param name="static_validation_reach_m" value="$(arg static_validation_reach_m)"/>
+    <param name="smooth_segments" value="$(arg smooth_segments)"/>
+  </node>
+
+  <node pkg="arm_controller"
+        type="uam_v5_experiment_motion.py"
+        name="uam_v5_experiment_motion"
+        output="screen">
+    <param name="namespace" value="$(arg namespace)"/>
+    <param name="frequency_hz" value="$(arg frequency_hz)"/>
+    <param name="enable_topic" value="/experiment/arm_motion_enabled"/>
+  </node>
+</launch>

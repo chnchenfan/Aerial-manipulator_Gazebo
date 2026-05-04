@@ -67,6 +67,7 @@
 #include <uORB/topics/vehicle_land_detected.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_local_position_setpoint.h>
+#include <uORB/topics/position_controller_status.h>
 #include <uORB/topics/vehicle_attitude.h>          // <--- 必须补上
 #include <uORB/topics/vehicle_angular_velocity.h>  // <--- 必须补上
 #include <uORB/topics/debug_key_value.h>           // <--- Bridge to ROS named_value_float
@@ -107,6 +108,7 @@ private:
 	uORB::PublicationData<takeoff_status_s>              _takeoff_status_pub {ORB_ID(takeoff_status)};// 发布起飞状态
 	uORB::Publication<vehicle_attitude_setpoint_s>	     _vehicle_attitude_setpoint_pub {ORB_ID(vehicle_attitude_setpoint)}; // 发布期望姿态（这是位置控制的最终输出）
 	uORB::Publication<vehicle_local_position_setpoint_s> _local_pos_sp_pub {ORB_ID(vehicle_local_position_setpoint)};	/**< 发布当前实际执行的设定点（包含平滑后的结果） */
+	uORB::Publication<position_controller_status_s>      _pos_ctrl_status_pub {ORB_ID(position_controller_status)};
 	// uORB::Publication<eso_pos_debug_s>                   _eso_pos_debug_pub {ORB_ID(eso_pos_debug)};  /**< Removed: ESO位置调试话题 */
 	uORB::Publication<debug_key_value_s>                 _debug_key_value_pub {ORB_ID(debug_key_value)}; /**< Bridge to ROS */
 
@@ -138,6 +140,7 @@ private:
 	static constexpr hrt_abstime DYNAMIC_COM_TIMEOUT{500_ms};
 	matrix::Vector3f _fallback_com{-0.015f, 0.0f, -0.164f};
 	hrt_abstime _last_dynamic_com_timestamp{0};
+	hrt_abstime _last_pos_ctrl_status_pub{0};
 	bool _dynamic_com_valid{false};
 
 	hrt_abstime	_time_stamp_last_loop{0};		/**< 上次循环的时间戳，用于计算 dt */
@@ -176,6 +179,7 @@ private:
 
 		// 起飞前ESO门控开关：flight 前不更新ESO，启用瞬间用测量初始化，避免尖峰
 		(ParamBool<px4::params::ESO_POS_ESOGATE>)   _param_ESO_pos_esogate,
+		(ParamBool<px4::params::ESO_DYN_FF_EN>)     _param_ESO_dyn_ff_en,
 
 		(ParamFloat<px4::params::ESO_POS_INT_LIM>) _param_ESO_pos_int_lim,
 
