@@ -91,4 +91,4 @@ fi
 #
 land_detector start multicopter
 
-study_demo start
+# study_demo start
