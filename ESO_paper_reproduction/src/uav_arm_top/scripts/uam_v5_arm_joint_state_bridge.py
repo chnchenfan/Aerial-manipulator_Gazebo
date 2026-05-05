@@ -24,8 +24,8 @@ class UamV5ArmJointStateBridge:
         )
         self.mavlink_topic = rospy.get_param("~mavlink_topic", "/mavlink/to")
         self.position_offsets = {
-            "arm_joint1": float(rospy.get_param("~arm_joint1_position_offset", -math.pi)),
-            "arm_joint2": float(rospy.get_param("~arm_joint2_position_offset", 1.5 * math.pi)),
+            "arm_joint1": float(rospy.get_param("~arm_joint1_position_offset", 0.0)),
+            "arm_joint2": float(rospy.get_param("~arm_joint2_position_offset", 0.0)),
             "left_hand_joint": float(rospy.get_param("~left_hand_position_offset", 0.0)),
         }
 

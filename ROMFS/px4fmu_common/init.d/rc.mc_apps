@@ -56,8 +56,13 @@ then
 	control_allocator start
 fi
 
-if ! param compare SYS_AUTOSTART 10016 && ! param compare SYS_AUTOSTART 10019
+if param compare SYS_AUTOSTART 10019 || param compare SYS_AUTOSTART 10021
 then
+	#
+	# Start Flight Mode Manager for ESO controlled airframes.
+	#
+	flight_mode_manager start
+else
 	#
 	# Start Multicopter Rate Controller.
 	#

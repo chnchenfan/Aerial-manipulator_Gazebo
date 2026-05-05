@@ -16,11 +16,11 @@ class UamV5ExperimentMotion:
         self.enable_topic = rospy.get_param("~enable_topic", "/experiment/arm_motion_enabled")
         self.command_rate_hz = float(rospy.get_param("~command_rate_hz", 50.0))
         self.frequency_hz = float(rospy.get_param("~frequency_hz", 0.5))
-        self.arm_joint1_offset = float(rospy.get_param("~arm_joint1_offset", -math.pi))
+        self.arm_joint1_offset = float(rospy.get_param("~arm_joint1_offset", 0.0))
         self.arm_joint1_amplitude = float(rospy.get_param("~arm_joint1_amplitude", 0.35))
-        self.arm_joint2_offset = float(rospy.get_param("~arm_joint2_offset", 1.5 * math.pi - 0.10))
+        self.arm_joint2_offset = float(rospy.get_param("~arm_joint2_offset", 0.0))
         self.arm_joint2_amplitude = float(rospy.get_param("~arm_joint2_amplitude", 0.35))
-        self.left_hand_offset = float(rospy.get_param("~left_hand_offset", 0.005))
+        self.left_hand_offset = float(rospy.get_param("~left_hand_offset", 0.0))
         self.left_hand_amplitude = float(rospy.get_param("~left_hand_amplitude", 0.003))
 
         self.joints = ["arm_joint1", "arm_joint2", "left_hand_joint"]

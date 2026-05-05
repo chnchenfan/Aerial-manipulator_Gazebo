@@ -57,4 +57,3 @@ mc_pos_control stop
 eso_att_control start
 eso_rate_control start
 eso_pos_control start
-

@@ -29,7 +29,7 @@ Relative to upstream PX4 `v1.13.2`, the main modifications are:
   - `ESO_paper_reproduction/src/uav_arm_model`
   - `ESO_paper_reproduction/src/uav_arm_top`
 - Added two airframe entries that switch PX4 from the stock multicopter controllers to the ESO stack:
-  - `ROMFS/px4fmu_common/init.d-posix/airframes/10016_uav_arm_v4`
+  - `ROMFS/px4fmu_common/init.d-posix/airframes/10021_uav_arm_v4`
   - `ROMFS/px4fmu_common/init.d-posix/airframes/10019_uam_v5`
 - Added the matching Gazebo models inside the `Tools/sitl_gazebo` submodule:
   - `Tools/sitl_gazebo/models/uav_arm_v4`
@@ -63,8 +63,8 @@ Relative to upstream PX4 `v1.13.2`, the main modifications are:
 
 #### Airframe Entry
 
-- `10016_uav_arm_v4`: sets `ESO_ARM_MODEL=0`, stops `mc_pos_control`, `mc_att_control`, `mc_rate_control`, then starts the ESO modules.
-- `10019_uam_v5`: sets `ESO_ARM_MODEL=1`, starts the same ESO modules, and also starts `arm_joint_bridge`.
+- `10021_uav_arm_v4`: sets `ESO_ARM_MODEL=0`, stops `mc_pos_control`, `mc_att_control`, `mc_rate_control`, starts `flight_mode_manager`, then starts the ESO modules.
+- `10019_uam_v5`: sets `ESO_ARM_MODEL=1`, starts `flight_mode_manager` and the same ESO modules, and also starts `arm_joint_bridge`.
 
 #### Top-Level Launch
 
@@ -92,7 +92,7 @@ For `uav_arm_v4`, the main loop is:
 1. Gazebo loads `uav_arm_v4.sdf`.
 2. ROS launch loads `uav_arm_v4.urdf.xacro` for ros_control.
 3. Offboard demo nodes publish MAVROS setpoints.
-4. PX4 airframe `10016_uav_arm_v4` activates the ESO stack.
+4. PX4 airframe `10021_uav_arm_v4` activates the ESO stack.
 5. Arm controllers move the manipulator through ROS topics.
 6. PX4 position/attitude/rate controllers compensate for the moving arm.
 
@@ -138,8 +138,8 @@ roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
 
 - `rospack find uav_arm_top`
 - `rospack find mavlink_sitl_gazebo`
-- PX4 console shows `eso_pos_control`, `eso_att_control`, and `eso_rate_control` running
-- `uam_v5` additionally shows `arm_joint_bridge` running
+- PX4 console shows `flight_mode_manager`, `eso_pos_control`, `eso_att_control`, and `eso_rate_control` running
+- `uam_v5` additionally shows `arm_joint_bridge` running, while stock `mc_pos_control`, `mc_att_control`, and `mc_rate_control` are not running
 - arm scripts can command joints without namespace errors
 - analysis scripts can read the recorded bag/log data
 
@@ -187,7 +187,7 @@ roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
   - `ESO_paper_reproduction/src/uav_arm_model`
   - `ESO_paper_reproduction/src/uav_arm_top`
 - 新增两套 SITL airframe，用来替换 PX4 官方多旋翼控制器并切入 ESO 控制栈：
-  - `ROMFS/px4fmu_common/init.d-posix/airframes/10016_uav_arm_v4`
+  - `ROMFS/px4fmu_common/init.d-posix/airframes/10021_uav_arm_v4`
   - `ROMFS/px4fmu_common/init.d-posix/airframes/10019_uam_v5`
 - 在 `Tools/sitl_gazebo` 子模块中新增两套 Gazebo 模型：
   - `Tools/sitl_gazebo/models/uav_arm_v4`
@@ -221,8 +221,8 @@ roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
 
 #### Airframe 入口
 
-- `10016_uav_arm_v4`：设置 `ESO_ARM_MODEL=0`，停止 `mc_pos_control`、`mc_att_control`、`mc_rate_control`，然后启动 ESO 模块。
-- `10019_uam_v5`：设置 `ESO_ARM_MODEL=1`，启动同样的 ESO 模块，并额外启动 `arm_joint_bridge`。
+- `10021_uav_arm_v4`：设置 `ESO_ARM_MODEL=0`，停止 `mc_pos_control`、`mc_att_control`、`mc_rate_control`，启动 `flight_mode_manager`，然后启动 ESO 模块。
+- `10019_uam_v5`：设置 `ESO_ARM_MODEL=1`，启动 `flight_mode_manager` 和同样的 ESO 模块，并额外启动 `arm_joint_bridge`。
 
 #### 顶层 Launch
 
@@ -250,7 +250,7 @@ roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
 1. Gazebo 加载 `uav_arm_v4.sdf`。
 2. ROS launch 加载 `uav_arm_v4.urdf.xacro` 给 ros_control 使用。
 3. Offboard demo 节点通过 MAVROS 下发设定值。
-4. PX4 的 `10016_uav_arm_v4` airframe 激活 ESO 控制栈。
+4. PX4 的 `10021_uav_arm_v4` airframe 激活 ESO 控制栈。
 5. 机械臂 ROS 控制器驱动关节运动。
 6. PX4 的位置环、姿态环、角速度环对机械臂扰动进行补偿。
 
@@ -296,8 +296,8 @@ roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
 
 - `rospack find uav_arm_top`
 - `rospack find mavlink_sitl_gazebo`
-- PX4 控制台能看到 `eso_pos_control`、`eso_att_control`、`eso_rate_control` 正常运行
-- `uam_v5` 下还能看到 `arm_joint_bridge` 正常运行
+- PX4 控制台能看到 `flight_mode_manager`、`eso_pos_control`、`eso_att_control`、`eso_rate_control` 正常运行
+- `uam_v5` 下还能看到 `arm_joint_bridge` 正常运行，且官方 `mc_pos_control`、`mc_att_control`、`mc_rate_control` 未运行
 - 机械臂脚本可以正常发命令，且 namespace 不报错
 - 后处理脚本能读到 bag 或控制台日志
 
