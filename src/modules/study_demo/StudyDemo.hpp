@@ -61,6 +61,8 @@
 #include <uORB/topics/vehicle_land_detected.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_local_position_setpoint.h>
+#include <uORB/topics/studyDemo.h>
+#include <uORB/topics/sensor_combined.h>
 
 using namespace time_literals;
 
@@ -89,6 +91,10 @@ private:
 	perf_counter_t _cycle_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle time")};
 	uORB::SubscriptionCallbackWorkItem _local_pos_sub {this, ORB_ID(vehicle_local_position)};	/**< vehicle local position */
 	uORB::SubscriptionInterval _parameter_update_sub {ORB_ID(parameter_update), 1_s};
+	uORB::Subscription _sensor_combined_sub {ORB_ID(sensor_combined)};
+	uORB::Publication<studyDemo_s> _study_demo_pub {ORB_ID(studyDemo)};	/**< vehicle local position setpoint publication */
+
+
 	void parameters_update(bool force);
 
 

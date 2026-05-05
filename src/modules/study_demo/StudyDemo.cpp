@@ -111,6 +111,19 @@ void StudyDemo::Run()
 			printf("Hello land! %f\r\n", (double)study_demo_len);
 		}
 
+		sensor_combined_s imu;
+		if (_sensor_combined_sub.update(&imu)){
+			studyDemo_s study;
+			study.enable = true;
+			study.timestamp = time_stamp_now; // 或者hrt_absolute_time()也行
+			study.acc[0] = imu.accelerometer_m_s2[0];
+			study.acc[1] = imu.accelerometer_m_s2[1];
+			study.acc[2] = imu.accelerometer_m_s2[2];
+			study.acc_norm = sqrtf(study.acc[0]*study.acc[0] + study.acc[1]*study.acc[1] + study.acc[2]*study.acc[2]);
+			_study_demo_pub.publish(study);
+
+		}
+
 
 
 	}

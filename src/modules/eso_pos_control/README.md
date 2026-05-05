@@ -56,7 +56,7 @@ eso_pos_control stop
 
 In normal use, the module is started by the modified airframes:
 
-- `10016_uav_arm_v4`
+- `10021_uav_arm_v4`
 - `10019_uam_v5`
 
 Important parameter families:
@@ -86,7 +86,10 @@ make px4_sitl gazebo_uam_v5
 
 Then validate:
 
+- `flight_mode_manager status` reports the module running,
 - `eso_pos_control status` reports the module running,
+- `mc_pos_control status`, `mc_att_control status`, and `mc_rate_control status` report that the stock controllers are not running,
+- `uam_v5` also reports `arm_joint_bridge status` running,
 - `vehicle_attitude_setpoint` is being published,
 - debug values appear on the ROS side through `/mavros/debug/named_value_float`,
 - motion of the arm changes the compensation behavior rather than being ignored.
@@ -154,7 +157,7 @@ eso_pos_control stop
 
 正常使用时，这个模块由以下 airframe 自动启动：
 
-- `10016_uav_arm_v4`
+- `10021_uav_arm_v4`
 - `10019_uam_v5`
 
 重点参数族：
@@ -184,7 +187,10 @@ make px4_sitl gazebo_uam_v5
 
 之后重点验证：
 
+- `flight_mode_manager status` 显示模块正在运行，
 - `eso_pos_control status` 显示模块正在运行，
+- `mc_pos_control status`、`mc_att_control status`、`mc_rate_control status` 显示官方控制器未运行，
+- `uam_v5` 下 `arm_joint_bridge status` 同样显示正在运行，
 - `vehicle_attitude_setpoint` 持续发布，
 - ROS 侧能通过 `/mavros/debug/named_value_float` 看到调试量，
 - 机械臂运动时，位置环补偿行为确实发生变化，而不是忽略关节状态。
