@@ -735,9 +735,13 @@ def wait_for_recorder_run_dir(output_dir, experiment_name, timeout_s=30.0):
     raise RuntimeError(f"Recorder did not create a bag for {experiment_name}")
 
 
+def runtime_param_items(params):
+    return {key: value for key, value in params.items() if not str(key).startswith("__")}
+
+
 def set_mavros_params(params, log_path, ros_home):
     lines = []
-    for key, value in params.items():
+    for key, value in runtime_param_items(params).items():
         command = shell_cmd(f"rosrun mavros mavparam set {key} {value}", ros_home)
         result = subprocess.run(
             ["bash", "-lc", command],
@@ -753,6 +757,16 @@ def set_mavros_params(params, log_path, ros_home):
 
 
 def run_experiment(candidate_name, params, experiment, output_root):
+    experiment = dict(experiment)
+    if params.get("__launch_args") is not None:
+        experiment["launch_args"] = str(params["__launch_args"])
+    if params.get("__metric_start_s") is not None:
+        experiment["metric_start_s"] = float(params["__metric_start_s"])
+    if params.get("__duration_s") is not None:
+        experiment["duration_s"] = float(params["__duration_s"])
+    if params.get("__run_after_enable_s") is not None:
+        experiment["run_after_enable_s"] = float(params["__run_after_enable_s"])
+
     run_root = output_root / candidate_name / experiment["name"]
     run_root.mkdir(parents=True, exist_ok=True)
     recorder_output = run_root / "bags"
@@ -802,7 +816,7 @@ def run_experiment(candidate_name, params, experiment, output_root):
     bag_path = run_dir / f"{experiment['name']}.bag"
     metrics = compute_metrics(
         bag_path,
-        start_time=None,
+        start_time=experiment.get("metric_start_s"),
         duration=experiment["duration_s"],
     )
     metrics_path = run_root / "raw_position_error.json"
@@ -813,6 +827,9 @@ def run_experiment(candidate_name, params, experiment, output_root):
         "experiment": experiment["name"],
         "params": params,
         "launch_args": launch_args,
+        "metric_start_s": experiment.get("metric_start_s"),
+        "duration_s": experiment["duration_s"],
+        "run_after_enable_s": experiment["run_after_enable_s"],
         "bag_path": str(bag_path),
         "metrics_path": str(metrics_path),
     }

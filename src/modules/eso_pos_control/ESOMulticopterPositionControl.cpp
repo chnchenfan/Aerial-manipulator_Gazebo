@@ -227,8 +227,8 @@ void ESOMulticopterPositionControl::parameters_update(bool force)
 		// 1. 设置位置环 PID (加入新增的积分项 I)
 		// ------------------------------------------------------------------
 		_control.setPositionGains(
-			Vector3f(_param_ESO_xy_p.get(), _param_ESO_xy_p.get(), _param_ESO_z_p.get()),
-			Vector3f(_param_ESO_xy_i.get(), _param_ESO_xy_i.get(), _param_ESO_z_i.get()));
+			Vector3f(_param_ESO_x_p.get(), _param_ESO_y_p.get(), _param_ESO_z_p.get()),
+			Vector3f(_param_ESO_x_i.get(), _param_ESO_y_i.get(), _param_ESO_z_i.get()));
 
 		// ------------------------------------------------------------------
 		// 2. 设置速度环 PID (ESO模式下通常只需 P，I和D由观测器替代，或根据需要保留)
@@ -236,7 +236,7 @@ void ESOMulticopterPositionControl::parameters_update(bool force)
 		// 【修改为】：注意这里 I 和 D 项暂时传 0 或者传入对应的参数(如果保留了的话)
 		// 根据您的 .hpp，因为移除了 VEL_I 和 VEL_D 的参数定义，所以这里直接传 0
 		_control.setVelocityGains(
-			Vector3f(_param_ESO_xy_vel_p_acc.get(), _param_ESO_xy_vel_p_acc.get(), _param_ESO_z_vel_p_acc.get()),
+			Vector3f(_param_ESO_x_vel_p_acc.get(), _param_ESO_y_vel_p_acc.get(), _param_ESO_z_vel_p_acc.get()),
 			Vector3f(0.f, 0.f, 0.f),  // 速度环 I (由 ESO 扰动估计替代)
 			Vector3f(0.f, 0.f, 0.f));   // 速度环 D (由 ESO 状态估计替代));
 		_control.setHorizontalThrustMargin(_param_ESO_thr_xy_marg.get());
@@ -250,8 +250,8 @@ void ESOMulticopterPositionControl::parameters_update(bool force)
 
 		// 设置 ESO 带宽
 		_control.setESOBandwidth(Vector3f(
-			_param_ESO_xy_bw.get(),
-			_param_ESO_xy_bw.get(),
+			_param_ESO_x_bw.get(),
+			_param_ESO_y_bw.get(),
 			_param_ESO_z_bw.get()
 		));
 

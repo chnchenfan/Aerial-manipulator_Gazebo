@@ -164,13 +164,17 @@ private:
 		.landed = true,
 	};
 
-	// 【参数定义宏】这里将 C语言定义的参数 (如 ESO_XY_P) 映射为 C++ 成员变量 (如 _param_ESO_xy_p)
+	// 【参数定义宏】这里将 C语言定义的参数 (如 ESO_X_P) 映射为 C++ 成员变量 (如 _param_ESO_x_p)
 	DEFINE_PARAMETERS(
 		// Position Control
-		(ParamFloat<px4::params::ESO_XY_P>)         _param_ESO_xy_p,
-		(ParamFloat<px4::params::ESO_XY_I>)         _param_ESO_xy_i,
-		(ParamFloat<px4::params::ESO_XY_VEL_P_ACC>) _param_ESO_xy_vel_p_acc,
-		(ParamFloat<px4::params::ESO_XY_BW>)        _param_ESO_xy_bw,
+		(ParamFloat<px4::params::ESO_X_P>)          _param_ESO_x_p,
+		(ParamFloat<px4::params::ESO_Y_P>)          _param_ESO_y_p,
+		(ParamFloat<px4::params::ESO_X_I>)          _param_ESO_x_i,
+		(ParamFloat<px4::params::ESO_Y_I>)          _param_ESO_y_i,
+		(ParamFloat<px4::params::ESO_X_VEL_P_ACC>)  _param_ESO_x_vel_p_acc,
+		(ParamFloat<px4::params::ESO_Y_VEL_P_ACC>)  _param_ESO_y_vel_p_acc,
+		(ParamFloat<px4::params::ESO_X_BW>)         _param_ESO_x_bw,
+		(ParamFloat<px4::params::ESO_Y_BW>)         _param_ESO_y_bw,
 
 		(ParamFloat<px4::params::ESO_Z_P>)          _param_ESO_z_p,
 		(ParamFloat<px4::params::ESO_Z_I>)          _param_ESO_z_i,

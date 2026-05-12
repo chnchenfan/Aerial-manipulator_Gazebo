@@ -51,7 +51,7 @@
  * @increment 0.01
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_ROLLRATE_P, 0.14f);
+PARAM_DEFINE_FLOAT(ESO_ROLLRATE_P, 0.24055f);
 
 /**
  * 横滚角速度 I 增益
@@ -134,7 +134,7 @@ PARAM_DEFINE_FLOAT(ESO_ROLLRATE_K, 1.0f);
  * @increment 0.01
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_PITCHRATE_P, 0.14f);
+PARAM_DEFINE_FLOAT(ESO_PITCHRATE_P, 0.16968f);
 
 /**
  * 俯仰角速度 I 增益
@@ -335,7 +335,7 @@ PARAM_DEFINE_FLOAT(ESO_INERTIA_ZZ, 0.08f);
  * @decimal 1
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_RATE_BW_R, 2.0f);
+PARAM_DEFINE_FLOAT(ESO_RATE_BW_R, 3.7450942682339265f);
 
 /**
  * ESO 带宽（Pitch 轴）
@@ -347,7 +347,7 @@ PARAM_DEFINE_FLOAT(ESO_RATE_BW_R, 2.0f);
  * @decimal 1
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_RATE_BW_P, 2.0f);
+PARAM_DEFINE_FLOAT(ESO_RATE_BW_P, 2.272848954518408f);
 
 /**
  * ESO 带宽（Yaw 轴）
@@ -372,7 +372,7 @@ PARAM_DEFINE_FLOAT(ESO_RATE_BW_Y, 0.8f);
  * @decimal 3
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_K_BETA, 0.85f);
+PARAM_DEFINE_FLOAT(ESO_K_BETA, 0.6753983577239936f);
 
 /**
  * Enable model-based dynamic feed-forward terms.
@@ -386,7 +386,7 @@ PARAM_DEFINE_FLOAT(ESO_K_BETA, 0.85f);
  * @boolean
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_INT32(ESO_DYN_FF_EN, 0);
+PARAM_DEFINE_INT32(ESO_DYN_FF_EN, 1);
 
 /**
  * 最大物理力矩（归一化用）
@@ -401,7 +401,7 @@ PARAM_DEFINE_INT32(ESO_DYN_FF_EN, 0);
  * @decimal 2
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_MAX_TORQUE, 2.20f);
+PARAM_DEFINE_FLOAT(ESO_MAX_TORQUE, 1.5689237741310784f);
 
 /**
  * 速率环积分输出缩放系数（小积分比例）
@@ -417,12 +417,12 @@ PARAM_DEFINE_FLOAT(ESO_MAX_TORQUE, 2.20f);
  * 与 ESO_RR_INT_LIM / ESO_PR_INT_LIM / ESO_YR_INT_LIM 共同决定。
  *
  * @min 0.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.01
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_RATE_I_SC, 0.10f);
+PARAM_DEFINE_FLOAT(ESO_RATE_I_SC, 0.12430763687449435f);
 
 /**
  * tau_s 软启用系数
@@ -434,12 +434,12 @@ PARAM_DEFINE_FLOAT(ESO_RATE_I_SC, 0.10f);
  * 推荐从 0.1 开始逐步上调，观察稳态误差与抖振情况。
  *
  * @min 0.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_K, 0.0f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_K, 0.07656162909208254f);
 
 /**
  * tau_s roll-axis scale/sign
@@ -449,12 +449,12 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_K, 0.0f);
  * negative to flip the roll-axis tau_s sign during offline-identified tests.
  *
  * @min -1.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_K_R, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_K_R, 0.04196685956703164f);
 
 /**
  * tau_s pitch-axis scale/sign
@@ -464,12 +464,12 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_K_R, 1.0f);
  * negative to flip the pitch-axis tau_s sign during offline-identified tests.
  *
  * @min -1.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_K_P, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_K_P, -0.45179684856908414f);
 
 /**
  * tau_s yaw-axis scale/sign
@@ -479,12 +479,12 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_K_P, 1.0f);
  * negative to flip the yaw-axis tau_s sign during offline-identified tests.
  *
  * @min -1.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_K_Y, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_K_Y, 0.3153866653296281f);
 
 /**
  * tau_s observer roll scale/sign
@@ -494,12 +494,12 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_K_Y, 1.0f);
  * control path to make ESO estimate only the residual disturbance.
  *
  * @min -1.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_OBS_R, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_OBS_R, 1.1742838498096384f);
 
 /**
  * tau_s observer pitch scale/sign
@@ -509,12 +509,12 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_OBS_R, 1.0f);
  * tune because current offline evidence is strongest there.
  *
  * @min -1.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_OBS_P, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_OBS_P, 0.9975129600067933f);
 
 /**
  * tau_s observer yaw scale/sign
@@ -524,7 +524,7 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_OBS_P, 1.0f);
  * physically validated.
  *
  * @min -1.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
@@ -538,12 +538,12 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_OBS_Y, 1.0f);
  * final physical torque command. Keep at 1.0 for legacy coupled behavior.
  *
  * @min -1.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_CTL_R, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_CTL_R, 0.912981734991624f);
 
 /**
  * tau_s control pitch scale/sign
@@ -553,12 +553,12 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_CTL_R, 1.0f);
  * pitch scale so model compensation informs ESO without over-driving motors.
  *
  * @min -1.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_CTL_P, 1.0f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_CTL_P, 1.2030863580577495f);
 
 /**
  * tau_s control yaw scale/sign
@@ -568,7 +568,7 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_CTL_P, 1.0f);
  * torque reconstruction is physically validated.
  *
  * @min -1.0
- * @max 1.0
+ * @max 1.5
  * @decimal 3
  * @increment 0.05
  * @group Multicopter Rate Control
@@ -588,7 +588,7 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_CTL_Y, 1.0f);
  * @increment 0.05
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_LIM, 0.30f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_LIM, 0.2777730262275409f);
 
 /**
  * tau_s injection low-pass time constant.
@@ -605,7 +605,7 @@ PARAM_DEFINE_FLOAT(ESO_TAUS_LIM, 0.30f);
  * @increment 0.01
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(ESO_TAUS_TAU, 0.10f);
+PARAM_DEFINE_FLOAT(ESO_TAUS_TAU, 0.13486946443819608f);
 
 /**
  * Max acro roll rate

@@ -1,0 +1,13 @@
+{
+  "stack": "mc",
+  "results": [
+    {
+      "experiment": "exp1_hover_disturbance_uam_v5",
+      "bag_path": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/uav_arm_top/auto_tune_data/manual_20260512_202813_current_default_mc_plots_with_arm/mc_with_arm_exp1_hover_disturbance_uam_v5/exp1_hover_disturbance_uam_v5/bags/20260512_202837/exp1_hover_disturbance_uam_v5.bag"
+    },
+    {
+      "experiment": "exp4_square_tracking_uam_v5",
+      "bag_path": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/uav_arm_top/auto_tune_data/manual_20260512_202813_current_default_mc_plots_with_arm/mc_with_arm_exp4_square_tracking_uam_v5/exp4_square_tracking_uam_v5/bags/20260512_202942/exp4_square_tracking_uam_v5.bag"
+    }
+  ]
+}

@@ -6,6 +6,10 @@
   <arg name="startup_delay_s" default="0.0"/>
   <arg name="static_validation_delay_s" default="-1.0"/>
   <arg name="static_validation_reach_m" default="-1.0"/>
+  <arg name="use_td_setpoint" default="false"/>
+  <arg name="td_bandwidth_hz" default="0.35"/>
+  <arg name="td_accel_limit_mps2" default="0.35"/>
+  <arg name="td_vel_limit_mps" default="0.25"/>
   <arg name="frequency_hz" default="0.5"/>
   <arg name="gui" default="true"/>
 
@@ -24,6 +28,10 @@
     <param name="startup_delay_s" value="$(arg startup_delay_s)"/>
     <param name="static_validation_delay_s" value="$(arg static_validation_delay_s)"/>
     <param name="static_validation_reach_m" value="$(arg static_validation_reach_m)"/>
+    <param name="use_td_setpoint" value="$(arg use_td_setpoint)"/>
+    <param name="td_bandwidth_hz" value="$(arg td_bandwidth_hz)"/>
+    <param name="td_accel_limit_mps2" value="$(arg td_accel_limit_mps2)"/>
+    <param name="td_vel_limit_mps" value="$(arg td_vel_limit_mps)"/>
   </node>
 
   <node pkg="arm_controller"

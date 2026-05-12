@@ -20,6 +20,12 @@ struct HoverTarget {
     double z;
 };
 
+struct TdState {
+    HoverTarget position;
+    HoverTarget velocity;
+    bool initialized;
+};
+
 mavros_msgs::State g_current_state;
 geometry_msgs::PoseStamped g_current_pose;
 bool g_have_pose = false;
@@ -38,6 +44,35 @@ double distance_to_target(const geometry_msgs::PoseStamped& pose, const HoverTar
     const double dy = pose.pose.position.y - target.y;
     const double dz = pose.pose.position.z - target.z;
     return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+void update_td_axis(double target, double dt, double bandwidth_rad_s, double acc_limit,
+                    double vel_limit, double& position, double& velocity) {
+    const double error = target - position;
+    double accel = bandwidth_rad_s * bandwidth_rad_s * error - 2.0 * bandwidth_rad_s * velocity;
+    accel = std::max(-acc_limit, std::min(acc_limit, accel));
+    velocity += accel * dt;
+    velocity = std::max(-vel_limit, std::min(vel_limit, velocity));
+    position += velocity * dt;
+}
+
+void update_td(const HoverTarget& target, double dt, double bandwidth_rad_s,
+               double acc_limit, double vel_limit, TdState& td) {
+    update_td_axis(target.x, dt, bandwidth_rad_s, acc_limit, vel_limit,
+                   td.position.x, td.velocity.x);
+    update_td_axis(target.y, dt, bandwidth_rad_s, acc_limit, vel_limit,
+                   td.position.y, td.velocity.y);
+    update_td_axis(target.z, dt, bandwidth_rad_s, acc_limit, vel_limit,
+                   td.position.z, td.velocity.z);
+}
+
+geometry_msgs::PoseStamped make_target_pose(const HoverTarget& target) {
+    geometry_msgs::PoseStamped pose;
+    pose.pose.position.x = target.x;
+    pose.pose.position.y = target.y;
+    pose.pose.position.z = target.z;
+    pose.pose.orientation.w = 1.0;
+    return pose;
 }
 
 }  // namespace
@@ -69,6 +104,10 @@ int main(int argc, char **argv) {
     double startup_delay_s = 0.00;
     double static_validation_delay_s = -1.00;
     double static_validation_reach_m = -1.00;
+    bool use_td_setpoint = false;
+    double td_bandwidth_hz = 0.35;
+    double td_accel_limit_mps2 = 0.35;
+    double td_vel_limit_mps = 0.25;
 
     pnh.param("target_x", target.x, target.x);
     pnh.param("target_y", target.y, target.y);
@@ -79,6 +118,14 @@ int main(int argc, char **argv) {
     pnh.param("startup_delay_s", startup_delay_s, startup_delay_s);
     pnh.param("static_validation_delay_s", static_validation_delay_s, static_validation_delay_s);
     pnh.param("static_validation_reach_m", static_validation_reach_m, static_validation_reach_m);
+    pnh.param("use_td_setpoint", use_td_setpoint, use_td_setpoint);
+    pnh.param("td_bandwidth_hz", td_bandwidth_hz, td_bandwidth_hz);
+    pnh.param("td_accel_limit_mps2", td_accel_limit_mps2, td_accel_limit_mps2);
+    pnh.param("td_vel_limit_mps", td_vel_limit_mps, td_vel_limit_mps);
+    td_bandwidth_hz = std::max(0.01, td_bandwidth_hz);
+    td_accel_limit_mps2 = std::max(0.01, td_accel_limit_mps2);
+    td_vel_limit_mps = std::max(0.05, td_vel_limit_mps);
+    const double td_bandwidth_rad_s = 2.0 * M_PI * td_bandwidth_hz;
 
     ros::Rate rate(20.0);
 
@@ -88,13 +135,30 @@ int main(int argc, char **argv) {
         ROS_INFO("Waiting for FCU connection...");
     }
 
-    geometry_msgs::PoseStamped target_pose;
-    target_pose.pose.position.x = target.x;
-    target_pose.pose.position.y = target.y;
-    target_pose.pose.position.z = target.z;
-    target_pose.pose.orientation.w = 1.0;
+    TdState td{{target.x, target.y, target.z}, {0.0, 0.0, 0.0}, false};
+    ros::Time last_td_update = ros::Time::now();
+    geometry_msgs::PoseStamped target_pose = make_target_pose(target);
 
     for (int i = 100; ros::ok() && i > 0; --i) {
+        if (use_td_setpoint && !td.initialized && g_have_pose) {
+            td.position = {
+                g_current_pose.pose.position.x,
+                g_current_pose.pose.position.y,
+                g_current_pose.pose.position.z,
+            };
+            td.velocity = {0.0, 0.0, 0.0};
+            td.initialized = true;
+            last_td_update = ros::Time::now();
+        }
+        if (use_td_setpoint && td.initialized) {
+            const ros::Time now = ros::Time::now();
+            const double dt = std::max(0.001, (now - last_td_update).toSec());
+            last_td_update = now;
+            update_td(target, dt, td_bandwidth_rad_s, td_accel_limit_mps2, td_vel_limit_mps, td);
+            target_pose = make_target_pose(td.position);
+        } else {
+            target_pose = make_target_pose(target);
+        }
         target_pose.header.stamp = ros::Time::now();
         local_pos_pub.publish(target_pose);
         ros::spinOnce();
@@ -105,6 +169,25 @@ int main(int argc, char **argv) {
         ROS_INFO("Delaying offboard arming by %.2f s", startup_delay_s);
         const ros::Time delay_start = ros::Time::now();
         while (ros::ok() && (ros::Time::now() - delay_start) < ros::Duration(startup_delay_s)) {
+            if (use_td_setpoint && !td.initialized && g_have_pose) {
+                td.position = {
+                    g_current_pose.pose.position.x,
+                    g_current_pose.pose.position.y,
+                    g_current_pose.pose.position.z,
+                };
+                td.velocity = {0.0, 0.0, 0.0};
+                td.initialized = true;
+                last_td_update = ros::Time::now();
+            }
+            if (use_td_setpoint && td.initialized) {
+                const ros::Time now = ros::Time::now();
+                const double dt = std::max(0.001, (now - last_td_update).toSec());
+                last_td_update = now;
+                update_td(target, dt, td_bandwidth_rad_s, td_accel_limit_mps2, td_vel_limit_mps, td);
+                target_pose = make_target_pose(td.position);
+            } else {
+                target_pose = make_target_pose(target);
+            }
             target_pose.header.stamp = ros::Time::now();
             local_pos_pub.publish(target_pose);
             ros::spinOnce();
@@ -128,8 +211,9 @@ int main(int argc, char **argv) {
     arm_enable_msg.data = false;
     arm_enable_pub.publish(arm_enable_msg);
 
-    ROS_INFO("Hover disturbance experiment target: (%.2f, %.2f, %.2f)",
-             target.x, target.y, target.z);
+    ROS_INFO("Hover disturbance experiment target: (%.2f, %.2f, %.2f), TD %s, TD bw %.2f Hz",
+             target.x, target.y, target.z, use_td_setpoint ? "enabled" : "disabled",
+             td_bandwidth_hz);
 
     while (ros::ok()) {
         if (g_current_state.mode != "OFFBOARD" &&
@@ -188,6 +272,25 @@ int main(int argc, char **argv) {
             activation_window_started = false;
         }
 
+        if (use_td_setpoint && !td.initialized && g_have_pose) {
+            td.position = {
+                g_current_pose.pose.position.x,
+                g_current_pose.pose.position.y,
+                g_current_pose.pose.position.z,
+            };
+            td.velocity = {0.0, 0.0, 0.0};
+            td.initialized = true;
+            last_td_update = ros::Time::now();
+        }
+        if (use_td_setpoint && td.initialized) {
+            const ros::Time now = ros::Time::now();
+            const double dt = std::max(0.001, (now - last_td_update).toSec());
+            last_td_update = now;
+            update_td(target, dt, td_bandwidth_rad_s, td_accel_limit_mps2, td_vel_limit_mps, td);
+            target_pose = make_target_pose(td.position);
+        } else {
+            target_pose = make_target_pose(target);
+        }
         target_pose.header.stamp = ros::Time::now();
         local_pos_pub.publish(target_pose);
 

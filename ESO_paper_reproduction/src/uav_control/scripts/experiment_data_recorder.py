@@ -12,7 +12,7 @@ from pathlib import Path
 import rosbag
 import rospy
 from geometry_msgs.msg import PoseStamped
-from mavros_msgs.msg import State
+from mavros_msgs.msg import PositionTarget, State
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool, Float32
 
@@ -64,6 +64,12 @@ class ExperimentDataRecorder:
                 "/mavros/setpoint_position/local",
                 PoseStamped,
                 self._make_callback("/mavros/setpoint_position/local"),
+                queue_size=200,
+            ),
+            rospy.Subscriber(
+                "/mavros/setpoint_raw/local",
+                PositionTarget,
+                self._make_callback("/mavros/setpoint_raw/local"),
                 queue_size=200,
             ),
             rospy.Subscriber(

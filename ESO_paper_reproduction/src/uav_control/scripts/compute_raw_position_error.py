@@ -17,6 +17,7 @@ import rosbag
 
 POSE_TOPIC = "/mavros/local_position/pose"
 SETPOINT_TOPIC = "/mavros/setpoint_position/local"
+RAW_SETPOINT_TOPIC = "/mavros/setpoint_raw/local"
 ENABLE_TOPIC = "/experiment/arm_motion_enabled"
 
 
@@ -72,20 +73,26 @@ def load_position_data(bag_path, start_time, duration):
         bag_start = bag.get_start_time()
         end_time = None if duration is None else start_time + duration
 
-        for topic, msg, t in bag.read_messages(topics=[POSE_TOPIC, SETPOINT_TOPIC]):
+        for topic, msg, t in bag.read_messages(topics=[POSE_TOPIC, SETPOINT_TOPIC, RAW_SETPOINT_TOPIC]):
             current_time = float(t.to_sec() - bag_start)
             if current_time < start_time:
                 continue
             if end_time is not None and current_time > end_time:
                 continue
 
-            aligned_time = current_time - start_time
-            position = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
-
             if topic == POSE_TOPIC:
+                aligned_time = current_time - start_time
+                position = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
                 pose_t.append(aligned_time)
                 pose.append(position)
             elif topic == SETPOINT_TOPIC:
+                aligned_time = current_time - start_time
+                position = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
+                setpoint_t.append(aligned_time)
+                setpoint.append(position)
+            elif topic == RAW_SETPOINT_TOPIC:
+                aligned_time = current_time - start_time
+                position = [msg.position.x, msg.position.y, msg.position.z]
                 setpoint_t.append(aligned_time)
                 setpoint.append(position)
 

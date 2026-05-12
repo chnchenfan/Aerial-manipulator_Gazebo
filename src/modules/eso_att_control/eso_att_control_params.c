@@ -51,7 +51,7 @@
  * @increment 0.1
  * @group Multicopter Attitude Control
  */
-PARAM_DEFINE_FLOAT(ESO_ROLL_P, 1.30f);
+PARAM_DEFINE_FLOAT(ESO_ROLL_P, 1.63571f);
 
 /**
  * 俯仰 P 增益
@@ -65,7 +65,7 @@ PARAM_DEFINE_FLOAT(ESO_ROLL_P, 1.30f);
  * @increment 0.1
  * @group Multicopter Attitude Control
  */
-PARAM_DEFINE_FLOAT(ESO_PITCH_P, 1.30f);
+PARAM_DEFINE_FLOAT(ESO_PITCH_P, 1.57133f);
 
 /**
  * 偏航 P 增益

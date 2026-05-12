@@ -3,11 +3,13 @@
  * @brief Square trajectory offboard node with altitude-triggered arm excitation.
  */
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/CommandBool.h>
+#include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <ros/ros.h>
@@ -19,6 +21,12 @@ struct Waypoint {
     double x;
     double y;
     double z;
+};
+
+struct TrackingDifferentiator {
+    Waypoint position;
+    Waypoint velocity;
+    bool initialized{false};
 };
 
 mavros_msgs::State g_current_state;
@@ -62,6 +70,64 @@ double smoothstep(double ratio) {
     return ratio * ratio * (3.0 - 2.0 * ratio);
 }
 
+double clamp_value(double value, double limit) {
+    if (limit <= 0.0) {
+        return value;
+    }
+    return std::max(-limit, std::min(limit, value));
+}
+
+void reset_td(TrackingDifferentiator& td, const Waypoint& position) {
+    td.position = position;
+    td.velocity = {0.0, 0.0, 0.0};
+    td.initialized = true;
+}
+
+void update_td_axis(double target, double dt, double bandwidth_rad_s, double acc_limit,
+                    double vel_limit, double& position, double& velocity) {
+    const double error = target - position;
+    double acceleration = bandwidth_rad_s * bandwidth_rad_s * error -
+                          2.0 * bandwidth_rad_s * velocity;
+    acceleration = clamp_value(acceleration, acc_limit);
+    velocity = clamp_value(velocity + acceleration * dt, vel_limit);
+    position += velocity * dt;
+}
+
+void update_td(TrackingDifferentiator& td, const Waypoint& target, double dt,
+               double bandwidth_rad_s, double acc_limit, double vel_limit) {
+    if (!td.initialized || dt <= 0.0) {
+        reset_td(td, target);
+        return;
+    }
+
+    update_td_axis(target.x, dt, bandwidth_rad_s, acc_limit, vel_limit, td.position.x, td.velocity.x);
+    update_td_axis(target.y, dt, bandwidth_rad_s, acc_limit, vel_limit, td.position.y, td.velocity.y);
+    update_td_axis(target.z, dt, bandwidth_rad_s, acc_limit, vel_limit, td.position.z, td.velocity.z);
+}
+
+void fill_pose_setpoint(geometry_msgs::PoseStamped& msg, const Waypoint& position) {
+    msg.pose.position.x = position.x;
+    msg.pose.position.y = position.y;
+    msg.pose.position.z = position.z;
+    msg.pose.orientation.w = 1.0;
+}
+
+void fill_raw_setpoint(mavros_msgs::PositionTarget& msg, const Waypoint& position, const Waypoint& velocity) {
+    msg.coordinate_frame = mavros_msgs::PositionTarget::FRAME_LOCAL_NED;
+    msg.type_mask =
+        mavros_msgs::PositionTarget::IGNORE_AFX |
+        mavros_msgs::PositionTarget::IGNORE_AFY |
+        mavros_msgs::PositionTarget::IGNORE_AFZ |
+        mavros_msgs::PositionTarget::IGNORE_YAW |
+        mavros_msgs::PositionTarget::IGNORE_YAW_RATE;
+    msg.position.x = position.x;
+    msg.position.y = position.y;
+    msg.position.z = position.z;
+    msg.velocity.x = velocity.x;
+    msg.velocity.y = velocity.y;
+    msg.velocity.z = velocity.z;
+}
+
 }  // namespace
 
 int main(int argc, char **argv) {
@@ -76,6 +142,8 @@ int main(int argc, char **argv) {
 
     ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>(
         "mavros/setpoint_position/local", 10);
+    ros::Publisher raw_setpoint_pub = nh.advertise<mavros_msgs::PositionTarget>(
+        "mavros/setpoint_raw/local", 10);
     ros::Publisher arm_enable_pub = nh.advertise<std_msgs::Bool>(
         "experiment/arm_motion_enabled", 1, true);
 
@@ -89,7 +157,7 @@ int main(int argc, char **argv) {
     double origin_x = 0.0;
     double origin_y = 0.0;
     double corner_hold_s = 3.0;
-    double path_speed_mps = 0.25;
+    double path_speed_mps = 0.09621358687658534;
     double reach_tol_m = 0.2;
     double activation_altitude_m = 1.9;
     double activation_hold_s = 1.0;
@@ -97,6 +165,12 @@ int main(int argc, char **argv) {
     double static_validation_delay_s = -1.0;
     double static_validation_reach_m = -1.0;
     bool smooth_segments = false;
+    bool use_raw_setpoint = true;
+    bool use_td_setpoint = true;
+    double velocity_ff_scale = 0.008279872451230363;
+    double td_bandwidth_hz = 0.32880281660571076;
+    double td_accel_limit_mps2 = 0.19318573839061587;
+    double td_vel_limit_mps = 0.22063069013967385;
 
     pnh.param("side_length", side_length, side_length);
     pnh.param("altitude", altitude, altitude);
@@ -111,7 +185,17 @@ int main(int argc, char **argv) {
     pnh.param("static_validation_delay_s", static_validation_delay_s, static_validation_delay_s);
     pnh.param("static_validation_reach_m", static_validation_reach_m, static_validation_reach_m);
     pnh.param("smooth_segments", smooth_segments, smooth_segments);
+    pnh.param("use_raw_setpoint", use_raw_setpoint, use_raw_setpoint);
+    pnh.param("use_td_setpoint", use_td_setpoint, use_td_setpoint);
+    pnh.param("velocity_ff_scale", velocity_ff_scale, velocity_ff_scale);
+    pnh.param("td_bandwidth_hz", td_bandwidth_hz, td_bandwidth_hz);
+    pnh.param("td_accel_limit_mps2", td_accel_limit_mps2, td_accel_limit_mps2);
+    pnh.param("td_vel_limit_mps", td_vel_limit_mps, td_vel_limit_mps);
     path_speed_mps = std::max(0.05, path_speed_mps);
+    td_bandwidth_hz = std::max(0.01, td_bandwidth_hz);
+    td_accel_limit_mps2 = std::max(0.01, td_accel_limit_mps2);
+    td_vel_limit_mps = std::max(0.05, td_vel_limit_mps);
+    const double td_bandwidth_rad_s = 2.0 * M_PI * td_bandwidth_hz;
 
     ros::Rate rate(20.0);
 
@@ -131,14 +215,22 @@ int main(int argc, char **argv) {
 
     std::size_t wp_idx = 0;
     geometry_msgs::PoseStamped target_pose;
-    target_pose.pose.position.x = waypoints[wp_idx].x;
-    target_pose.pose.position.y = waypoints[wp_idx].y;
-    target_pose.pose.position.z = waypoints[wp_idx].z;
-    target_pose.pose.orientation.w = 1.0;
+    mavros_msgs::PositionTarget target_raw;
+    TrackingDifferentiator td;
+    reset_td(td, waypoints[wp_idx]);
+    fill_pose_setpoint(target_pose, waypoints[wp_idx]);
+    fill_raw_setpoint(target_raw, waypoints[wp_idx], td.velocity);
+    ros::Time last_setpoint_time = ros::Time::now();
 
     for (int i = 100; ros::ok() && i > 0; --i) {
-        target_pose.header.stamp = ros::Time::now();
-        local_pos_pub.publish(target_pose);
+        const ros::Time stamp = ros::Time::now();
+        if (use_raw_setpoint) {
+            target_raw.header.stamp = stamp;
+            raw_setpoint_pub.publish(target_raw);
+        } else {
+            target_pose.header.stamp = stamp;
+            local_pos_pub.publish(target_pose);
+        }
         ros::spinOnce();
         rate.sleep();
     }
@@ -147,8 +239,14 @@ int main(int argc, char **argv) {
         ROS_INFO("Delaying offboard arming by %.2f s", startup_delay_s);
         const ros::Time delay_start = ros::Time::now();
         while (ros::ok() && (ros::Time::now() - delay_start) < ros::Duration(startup_delay_s)) {
-            target_pose.header.stamp = ros::Time::now();
-            local_pos_pub.publish(target_pose);
+            const ros::Time stamp = ros::Time::now();
+            if (use_raw_setpoint) {
+                target_raw.header.stamp = stamp;
+                raw_setpoint_pub.publish(target_raw);
+            } else {
+                target_pose.header.stamp = stamp;
+                local_pos_pub.publish(target_pose);
+            }
             ros::spinOnce();
             rate.sleep();
         }
@@ -173,8 +271,11 @@ int main(int argc, char **argv) {
     arm_enable_msg.data = false;
     arm_enable_pub.publish(arm_enable_msg);
 
-    ROS_INFO("Square tracking experiment initialized at altitude %.2f m, path speed %.2f m/s, smooth segments %s",
-             altitude, path_speed_mps, smooth_segments ? "enabled" : "disabled");
+    ROS_INFO("Square tracking experiment initialized at altitude %.2f m, path speed %.2f m/s, smooth segments %s, raw setpoint %s, TD %s, velocity FF scale %.2f, TD bw %.2f Hz",
+             altitude, path_speed_mps, smooth_segments ? "enabled" : "disabled",
+             use_raw_setpoint ? "enabled" : "disabled",
+             use_td_setpoint ? "enabled" : "disabled",
+             velocity_ff_scale, td_bandwidth_hz);
 
     while (ros::ok()) {
         if (g_current_state.mode != "OFFBOARD" &&
@@ -208,6 +309,8 @@ int main(int argc, char **argv) {
                 ros::Time::now() - validation_since >= ros::Duration(static_validation_delay_s)) {
                 arm_motion_enabled = true;
                 phase_start = ros::Time::now();
+                reset_td(td, waypoints.front());
+                last_setpoint_time = phase_start;
                 arm_enable_msg.data = true;
                 arm_enable_pub.publish(arm_enable_msg);
                 ROS_INFO("Static validation marker published, square tracking begins");
@@ -230,6 +333,8 @@ int main(int argc, char **argv) {
                 } else if (ros::Time::now() - activation_since >= ros::Duration(activation_hold_s)) {
                     arm_motion_enabled = true;
                     phase_start = ros::Time::now();
+                    reset_td(td, waypoints.front());
+                    last_setpoint_time = phase_start;
                     arm_enable_msg.data = true;
                     arm_enable_pub.publish(arm_enable_msg);
                     ROS_INFO("Arm motion enabled, square tracking begins");
@@ -274,12 +379,30 @@ int main(int argc, char **argv) {
             }
         }
 
-        target_pose.pose.position.x = active_wp.x;
-        target_pose.pose.position.y = active_wp.y;
-        target_pose.pose.position.z = active_wp.z;
-        target_pose.pose.orientation.w = 1.0;
-        target_pose.header.stamp = ros::Time::now();
-        local_pos_pub.publish(target_pose);
+        const ros::Time stamp = ros::Time::now();
+        const double dt = (stamp - last_setpoint_time).toSec();
+        last_setpoint_time = stamp;
+        if (use_td_setpoint) {
+            update_td(td, active_wp, dt, td_bandwidth_rad_s, td_accel_limit_mps2, td_vel_limit_mps);
+        } else {
+            reset_td(td, active_wp);
+        }
+
+        const Waypoint published_velocity = {
+            td.velocity.x * velocity_ff_scale,
+            td.velocity.y * velocity_ff_scale,
+            td.velocity.z * velocity_ff_scale,
+        };
+
+        if (use_raw_setpoint) {
+            fill_raw_setpoint(target_raw, td.position, published_velocity);
+            target_raw.header.stamp = stamp;
+            raw_setpoint_pub.publish(target_raw);
+        } else {
+            fill_pose_setpoint(target_pose, td.position);
+            target_pose.header.stamp = stamp;
+            local_pos_pub.publish(target_pose);
+        }
 
         ros::spinOnce();
         rate.sleep();
