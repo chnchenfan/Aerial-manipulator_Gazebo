@@ -1,0 +1,18 @@
+{
+  "experiment_name": "exp4_square_tracking_uam_v5",
+  "namespace": "uav_arm",
+  "bag_path": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_fresh_runs/20260513_193944/paper_eso_mode2_exp4_square_tracking_uam_v5/bags/20260513_194902/exp4_square_tracking_uam_v5.bag",
+  "started_at": "2026-05-13T19:49:02.763867",
+  "stopped_at": "2026-05-13T19:50:50.804885",
+  "message_counts": {
+    "/mavros/setpoint_raw/local": 2159,
+    "/mavros/local_position/pose": 3239,
+    "/experiment/arm_motion_enabled": 2,
+    "/uav_arm/joint_states": 10794,
+    "/uav_arm/target_joint_states": 5396
+  },
+  "analysis_start_time_s": 2.1,
+  "record_arm_topics": true,
+  "record_state_topic": false,
+  "record_motor_speed_topics": false
+}

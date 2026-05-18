@@ -1,0 +1,21 @@
+<launch>
+  <arg name="namespace" default="uav_arm"/>
+
+  <!-- Load PID gains into the controller namespace -->
+  <rosparam file="$(find arm_controller)/config/joint_pid_uav_arm_v4.yaml"
+            command="load"
+            ns="$(arg namespace)"/>
+
+  <!-- Spawn controllers once Gazebo publishes the ros_control hardware -->
+  <node pkg="controller_manager"
+        type="spawner"
+        name="uav_arm_controller_spawner"
+        args="joint_state_controller
+              arm_joint1_position_controller
+              arm_joint2_position_controller
+              arm_joint3_position_controller
+              arm_joint4_position_controller
+              left_gripper_joint_position_controller"
+        ns="$(arg namespace)"
+        output="screen"/>
+</launch>

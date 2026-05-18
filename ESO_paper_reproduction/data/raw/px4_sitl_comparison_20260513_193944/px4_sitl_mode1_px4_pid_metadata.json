@@ -1,0 +1,18 @@
+{
+  "experiment_name": "exp1_hover_disturbance_uam_v5",
+  "namespace": "uav_arm",
+  "bag_path": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/fresh_runs/20260513_193944/px4_pid_mode1_exp1_hover_disturbance_uam_v5/bags/20260513_194007/exp1_hover_disturbance_uam_v5.bag",
+  "started_at": "2026-05-13T19:40:07.899904",
+  "stopped_at": "2026-05-13T19:41:23.410748",
+  "message_counts": {
+    "/mavros/local_position/pose": 2264,
+    "/experiment/arm_motion_enabled": 2,
+    "/uav_arm/target_joint_states": 3772,
+    "/mavros/setpoint_position/local": 1509,
+    "/uav_arm/joint_states": 7543
+  },
+  "analysis_start_time_s": 9.616,
+  "record_arm_topics": true,
+  "record_state_topic": false,
+  "record_motor_speed_topics": false
+}

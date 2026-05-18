@@ -59,7 +59,7 @@ uav_arm_model/
 - `urdf/uam_v5.urdf.xacro`
 - `meshes/uam_v5/*.STL`
 - `arm_controller/config/joint_pid_uam_v5.yaml`
-- `uav_arm_top/launch/arm_pid_SITL_Gazebo_uam_v5.launch`
+- `uav_control/launch/arm_pid_SITL_Gazebo_uam_v5.launch`
 - `Tools/sitl_gazebo/models/uam_v5/uam_v5.sdf`
 
 信息流：

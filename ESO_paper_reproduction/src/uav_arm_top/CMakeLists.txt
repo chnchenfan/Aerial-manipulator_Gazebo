@@ -19,36 +19,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(eso_offboard_node
-  src/eso_offboard_node.cpp
-)
-target_link_libraries(eso_offboard_node
-  ${catkin_LIBRARIES}
-  uav_core_lib
-)
-
-add_executable(eso_square_offboard_node
-  src/eso_square_offboard_node.cpp
-)
-target_link_libraries(eso_square_offboard_node
-  ${catkin_LIBRARIES}
-  uav_core_lib
-)
-
-add_executable(eso_offboard_2_5_node
-  src/eso_offboard_2_5_node.cpp
-)
-target_link_libraries(eso_offboard_2_5_node
-  ${catkin_LIBRARIES}
-  uav_core_lib
-)
-
 add_executable(eso_circle_offboard_node
   src/eso_circle_offboard_node.cpp
 )
 target_link_libraries(eso_circle_offboard_node
   ${catkin_LIBRARIES}
-  uav_core_lib
 )
 
 add_executable(eso_hover_disturbance_offboard_node
@@ -56,7 +31,6 @@ add_executable(eso_hover_disturbance_offboard_node
 )
 target_link_libraries(eso_hover_disturbance_offboard_node
   ${catkin_LIBRARIES}
-  uav_core_lib
 )
 
 add_executable(eso_square_arm_experiment_node
@@ -64,19 +38,6 @@ add_executable(eso_square_arm_experiment_node
 )
 target_link_libraries(eso_square_arm_experiment_node
   ${catkin_LIBRARIES}
-  uav_core_lib
-)
-
-install(TARGETS eso_offboard_node
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(TARGETS eso_square_offboard_node
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(TARGETS eso_offboard_2_5_node
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(TARGETS eso_circle_offboard_node

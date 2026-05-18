@@ -1,317 +1,205 @@
-# PX4-ESO UAV-Arm Repository
+# PX4-SITL Aerial Manipulator ESO Comparison
 
-## English
+## 1. Summary
 
-### 1. Overview
+This repository provides a PX4-SITL, Gazebo, and ROS simulation workflow for validating an Extended State Observer (ESO) control stack on the `uam_v5` aerial manipulator. The workflow connects the Gazebo physical model, PX4 low-level controller modules, ROS arm controllers, MAVROS communication, offboard experiment nodes, recorded datasets, and MATLAB plotting scripts.
 
-This repository is a PX4 `v1.13.2` based research branch for a quadrotor-manipulator platform. The work is centered on one question: how to run a custom ESO-based control stack on PX4 while co-simulating a robotic arm in Gazebo and coordinating the arm through ROS.
+The current validation focuses on two experiments:
 
-The repository is no longer documented as a generic PX4 checkout. It is documented as a modified project with three visible pillars:
+- `exp1_hover_disturbance_uam_v5`: hover disturbance rejection while the manipulator moves periodically.
+- `exp4_square_tracking_uam_v5`: square trajectory tracking while the manipulator continues periodic motion.
 
-- custom PX4 flight-control modules for position, attitude, and rate control,
-- two quadrotor-arm platform models: `uav_arm_v4` and `uam_v5`,
-- ROS-side top-level demos, arm controllers, and analysis tools.
+The comparison is between the paper ESO controller and a PX4-PID baseline. The ESO runs use the PX4 `eso_*` controller modules. The PX4-PID baseline uses the native PX4 multicopter position, attitude, and rate control chain. Both stacks are evaluated on the same `uam_v5` Gazebo model, arm motion profile, ROS experiment nodes, recorded data format, and plotting scripts.
 
-### 2. What Was Modified
+## 2. Project Structure
 
-Relative to upstream PX4 `v1.13.2`, the main modifications are:
+```text
+.
++-- ESO_paper_reproduction/
+|   +-- src/setup_px4_sitl_ros_env.sh
+|   |   +-- Sets up ROS, PX4-SITL, and Gazebo paths.
+|   |
+|   +-- src/uav_control/
+|   |   +-- launch/arm_pid_SITL_Gazebo_uam_v5.launch
+|   |       +-- Shared uam_v5 PX4-SITL + Gazebo + arm-controller bringup.
+|   |
+|   +-- src/uav_arm_top/
+|   |   +-- launch/exp1_hover_disturbance_uam_v5.launch
+|   |   |   +-- Exp1 hover disturbance rejection entrypoint.
+|   |   +-- launch/exp4_square_tracking_uam_v5.launch
+|   |   |   +-- Exp4 square trajectory tracking entrypoint.
+|   |   +-- src/eso_hover_disturbance_offboard_node.cpp
+|   |   |   +-- Exp1 offboard setpoint publisher and arm-motion trigger.
+|   |   +-- src/eso_square_arm_experiment_node.cpp
+|   |   |   +-- Exp4 square setpoint publisher and arm-motion trigger.
+|   |   +-- scripts/uam_v5_arm_joint_state_bridge.py
+|   |       +-- Bridges ROS joint states into PX4 through MAVLink named values.
+|   |
+|   +-- src/arm_controller/
+|   |   +-- launch/controller_bringup_uam_v5.launch
+|   |   +-- config/joint_pid_uam_v5.yaml
+|   |   +-- scripts/uam_v5_experiment_motion.py
+|   |       +-- Gazebo ros_control arm controllers and periodic arm motion.
+|   |
+|   +-- src/uav_arm_model/
+|   |   +-- urdf/uam_v5.urdf.xacro
+|   |   +-- meshes/uam_v5/
+|   |       +-- ROS robot description, visual meshes, and collision meshes.
+|   |
+|   +-- data/
+|       +-- raw/px4_sitl_comparison_20260513_193944/
+|       |   +-- PX4-SITL comparison bags, MATLAB files, metadata, and summary.
+|       +-- figure/px4_sitl_comparison_20260513_193944/
+|       |   +-- Generated ESO vs PX4-PID comparison figures.
+|       +-- scripts/plot_px4_pid_comparison.m
+|           +-- Regenerates figures and metric tables from the MATLAB files.
+|
++-- Tools/sitl_gazebo/models/uam_v5/uam_v5.sdf
+|   +-- Gazebo physical model for the uam_v5 vehicle and manipulator.
+|
++-- ROMFS/px4fmu_common/init.d-posix/airframes/10019_uam_v5
+|   +-- PX4-SITL airframe that selects the uam_v5 model and starts the control stack.
+|
++-- src/modules/
+    +-- eso_pos_control/
+    +-- eso_att_control/
+    +-- eso_rate_control/
+    +-- eso_common/
+    |   +-- PX4 low-level ESO position, attitude, rate, and shared model modules.
+    +-- mc_pos_control/
+    +-- mc_att_control/
+    +-- mc_rate_control/
+        +-- Native PX4 multicopter controllers used by the PX4-PID baseline.
+```
 
-- Added a custom PX4 ESO control stack:
-  - `src/modules/eso_pos_control`
-  - `src/modules/eso_att_control`
-  - `src/modules/eso_rate_control`
-  - `src/modules/eso_common`
-- Added a PX4-side joint-state bridge:
-  - `src/modules/arm_joint_bridge`
-- Added ROS packages for integration and experiments:
-  - `ESO_paper_reproduction/src/uav_control`
-  - `ESO_paper_reproduction/src/arm_controller`
-  - `ESO_paper_reproduction/src/uav_arm_model`
-  - `ESO_paper_reproduction/src/uav_arm_top`
-- Added two airframe entries that switch PX4 from the stock multicopter controllers to the ESO stack:
-  - `ROMFS/px4fmu_common/init.d-posix/airframes/10021_uav_arm_v4`
-  - `ROMFS/px4fmu_common/init.d-posix/airframes/10019_uam_v5`
-- Added the matching Gazebo models inside the `Tools/sitl_gazebo` submodule:
-  - `Tools/sitl_gazebo/models/uav_arm_v4`
-  - `Tools/sitl_gazebo/models/uam_v5`
-- Added a workspace helper:
-  - `ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh`
+The Exp1 and Exp4 information flow is:
 
-### 3. Key Components
+1. `roslaunch uav_arm_top ...` starts the experiment entrypoint.
+2. The experiment launch includes `uav_control/launch/arm_pid_SITL_Gazebo_uam_v5.launch`.
+3. PX4 loads `Tools/sitl_gazebo/models/uam_v5/uam_v5.sdf` through the `10019_uam_v5` airframe.
+4. Gazebo and ros_control use `uav_arm_model/urdf/uam_v5.urdf.xacro` and `arm_controller` to drive the manipulator.
+5. `uam_v5_arm_joint_state_bridge.py` forwards arm joint states to PX4.
+6. PX4 controls the vehicle through either the ESO stack or the PX4-PID baseline.
+7. The experiment node publishes offboard setpoints and enables periodic arm motion after the trigger condition is reached.
+8. Bags, MATLAB data, summaries, and generated figures are stored under `ESO_paper_reproduction/data/`.
 
-#### PX4 Control Stack
+## 3. Workflow and Usage
 
-- `eso_pos_control`: consumes `trajectory_setpoint`, vehicle state, and arm joint state; publishes `vehicle_attitude_setpoint`.
-- `eso_att_control`: consumes `vehicle_attitude_setpoint`; publishes `vehicle_rates_setpoint`.
-- `eso_rate_control`: consumes `vehicle_rates_setpoint`; publishes torque, thrust, and actuator outputs.
-- `eso_common`: holds model-profile abstractions and shared dynamic presets for `uav_arm_v4` and `uam_v5`.
-- `arm_joint_bridge`: rebuilds `arm_joint_states` inside PX4 from `debug_key_value` messages derived from MAVLink named values.
-
-#### ROS Integration Layer
-
-- `uav_arm_top`: top-level launch and demo nodes for hover, staged altitude tests, square, and circle trajectories.
-- `arm_controller`: ros_control PID bring-up and arm motion helper scripts.
-- `uav_arm_model`: URDF/xacro, meshes, and ros_control transmission definitions for both models.
-- `uav_control`: ROS-side utilities for force/attitude conversion, trajectory generation, and post-run analysis.
-
-#### Model Variants
-
-- `uav_arm_v4`: serial manipulator configuration with dedicated ROS controllers and Gazebo model assets.
-- `uam_v5`: updated arm/hand geometry, different mass and inertia profile, and an additional ROS-to-MAVLink-to-PX4 joint-state bridge chain.
-
-### 4. Interfaces and Runtime Entry Points
-
-#### Airframe Entry
-
-- `10021_uav_arm_v4`: sets `ESO_ARM_MODEL=0`, stops `mc_pos_control`, `mc_att_control`, `mc_rate_control`, starts `flight_mode_manager`, then starts the ESO modules.
-- `10019_uam_v5`: sets `ESO_ARM_MODEL=1`, starts `flight_mode_manager` and the same ESO modules, and also starts `arm_joint_bridge`.
-
-#### Top-Level Launch
-
-- `roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch`
-- `roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch`
-- `roslaunch uav_arm_top circle_offboard_SITL_Gazebo.launch`
-
-#### Demo Nodes
-
-- `rosrun uav_arm_top eso_offboard_node`
-- `rosrun uav_arm_top eso_offboard_2_5_node`
-- `rosrun uav_arm_top eso_square_offboard_node`
-- `rosrun uav_arm_top eso_circle_offboard_node`
-
-#### Arm Scripts
-
-- `rosrun arm_controller joint_position_commander.py`
-- `rosrun arm_controller joint_position_commander_uam_v5.py`
-- `rosrun arm_controller arm_zero_hold_logger_uam_v5.py`
-
-### 5. End-to-End Data Path
-
-For `uav_arm_v4`, the main loop is:
-
-1. Gazebo loads `uav_arm_v4.sdf`.
-2. ROS launch loads `uav_arm_v4.urdf.xacro` for ros_control.
-3. Offboard demo nodes publish MAVROS setpoints.
-4. PX4 airframe `10021_uav_arm_v4` activates the ESO stack.
-5. Arm controllers move the manipulator through ROS topics.
-6. PX4 position/attitude/rate controllers compensate for the moving arm.
-
-For `uam_v5`, one more bridge is inserted:
-
-1. ROS arm controllers publish commands and observe `/uav_arm/joint_states`.
-2. `uam_v5_arm_joint_state_bridge.py` encodes joint position/velocity into MAVLink named values.
-3. MAVROS forwards them into PX4 as `debug_key_value`.
-4. `arm_joint_bridge` reconstructs `arm_joint_states`.
-5. ESO modules use those states for dynamic CoM/inertia-aware compensation.
-
-### 6. How to Run or Validate
-
-#### Build PX4 SITL
+Prepare the ROS, PX4-SITL, and Gazebo environment:
 
 ```bash
 cd /home/cf/PX4_Firmware_clean
-make px4_sitl gazebo_uav_arm_v4
-make px4_sitl gazebo_uam_v5
-```
-
-#### Build the Catkin Workspace
-
-```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-catkin_make
-```
-
-#### Prepare Each Terminal
-
-```bash
 source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
 ```
 
-#### Launch the Full Demo
+Run Exp1 hover disturbance rejection:
 
 ```bash
-roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch
-roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
+roslaunch uav_arm_top exp1_hover_disturbance_uam_v5.launch
 ```
 
-#### Minimal Validation Checklist
-
-- `rospack find uav_arm_top`
-- `rospack find mavlink_sitl_gazebo`
-- PX4 console shows `flight_mode_manager`, `eso_pos_control`, `eso_att_control`, and `eso_rate_control` running
-- `uam_v5` additionally shows `arm_joint_bridge` running, while stock `mc_pos_control`, `mc_att_control`, and `mc_rate_control` are not running
-- arm scripts can command joints without namespace errors
-- analysis scripts can read the recorded bag/log data
-
-### 7. File Map
-
-- `src/modules/eso_common`: model profiles shared by the ESO modules.
-- `src/modules/eso_pos_control`: custom multicopter position controller.
-- `src/modules/eso_att_control`: custom multicopter attitude controller.
-- `src/modules/eso_rate_control`: custom multicopter rate controller.
-- `src/modules/arm_joint_bridge`: PX4-side joint-state bridge.
-- `ROMFS/px4fmu_common/init.d-posix/airframes`: airframes that enable the custom stack.
-- `Tools/sitl_gazebo/models/uav_arm_v4`: Gazebo model for the `uav_arm_v4` platform.
-- `Tools/sitl_gazebo/models/uam_v5`: Gazebo model for the `uam_v5` platform.
-- `ESO_paper_reproduction/src/uav_arm_model`: ROS model package for both platforms.
-- `ESO_paper_reproduction/src/arm_controller`: ROS arm-controller bring-up and scripts.
-- `ESO_paper_reproduction/src/uav_arm_top`: top-level demos and launch files.
-- `ESO_paper_reproduction/src/uav_control`: ROS utilities and analysis tools.
-
-## 中文
-
-### 1. 概述
-
-这个仓库是基于 PX4 `v1.13.2` 改出来的四旋翼机械臂研究分支，核心目标不是保留一个通用 PX4，而是实现一套可在 PX4 上运行、并能和 Gazebo 机械臂联动的 ESO 控制系统。
-
-整个项目可以概括成三部分：
-
-- PX4 侧自定义 ESO 位置环、姿态环、角速度环，
-- 两套飞行器-机械臂模型：`uav_arm_v4` 和 `uam_v5`，
-- ROS 侧顶层 demo、机械臂控制、以及实验数据分析工具。
-
-### 2. 修改了什么
-
-相对于上游 PX4 `v1.13.2`，主要改动如下：
-
-- 新增 PX4 自定义 ESO 控制链：
-  - `src/modules/eso_pos_control`
-  - `src/modules/eso_att_control`
-  - `src/modules/eso_rate_control`
-  - `src/modules/eso_common`
-- 新增 PX4 侧机械臂关节桥接模块：
-  - `src/modules/arm_joint_bridge`
-- 新增 ROS 侧实验与联调包：
-  - `ESO_paper_reproduction/src/uav_control`
-  - `ESO_paper_reproduction/src/arm_controller`
-  - `ESO_paper_reproduction/src/uav_arm_model`
-  - `ESO_paper_reproduction/src/uav_arm_top`
-- 新增两套 SITL airframe，用来替换 PX4 官方多旋翼控制器并切入 ESO 控制栈：
-  - `ROMFS/px4fmu_common/init.d-posix/airframes/10021_uav_arm_v4`
-  - `ROMFS/px4fmu_common/init.d-posix/airframes/10019_uam_v5`
-- 在 `Tools/sitl_gazebo` 子模块中新增两套 Gazebo 模型：
-  - `Tools/sitl_gazebo/models/uav_arm_v4`
-  - `Tools/sitl_gazebo/models/uam_v5`
-- 新增一键环境脚本：
-  - `ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh`
-
-### 3. 关键组成
-
-#### PX4 控制栈
-
-- `eso_pos_control`：读取 `trajectory_setpoint`、飞行状态和关节状态，输出 `vehicle_attitude_setpoint`。
-- `eso_att_control`：读取 `vehicle_attitude_setpoint`，输出 `vehicle_rates_setpoint`。
-- `eso_rate_control`：读取 `vehicle_rates_setpoint`，输出推力、力矩和执行器控制量。
-- `eso_common`：统一管理 `uav_arm_v4` 与 `uam_v5` 的模型配置、质量、质心和惯量预设。
-- `arm_joint_bridge`：把 MAVLink 命名浮点值经 `debug_key_value` 汇总成 PX4 内部的 `arm_joint_states`。
-
-#### ROS 集成层
-
-- `uav_arm_top`：顶层 launch 和 demo 节点，负责悬停、分阶段高度实验、方形轨迹、圆轨迹等实验入口。
-- `arm_controller`：负责 ros_control PID 控制器加载，以及机械臂动作脚本。
-- `uav_arm_model`：负责两套模型的 URDF/xacro、mesh 和 transmission。
-- `uav_control`：负责 ROS 侧工具函数、轨迹生成和实验后处理，不是当前 PX4 主控制器本体。
-
-#### 两种模型
-
-- `uav_arm_v4`：串联机械臂构型，带独立 ROS 控制器与 Gazebo 资源。
-- `uam_v5`：更新后的机械臂/夹手构型，质量惯量不同，并额外加入一条 ROS 到 MAVLink 再到 PX4 的关节桥接链路。
-
-### 4. 接口与运行入口
-
-#### Airframe 入口
-
-- `10021_uav_arm_v4`：设置 `ESO_ARM_MODEL=0`，停止 `mc_pos_control`、`mc_att_control`、`mc_rate_control`，启动 `flight_mode_manager`，然后启动 ESO 模块。
-- `10019_uam_v5`：设置 `ESO_ARM_MODEL=1`，启动 `flight_mode_manager` 和同样的 ESO 模块，并额外启动 `arm_joint_bridge`。
-
-#### 顶层 Launch
-
-- `roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch`
-- `roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch`
-- `roslaunch uav_arm_top circle_offboard_SITL_Gazebo.launch`
-
-#### Demo 节点
-
-- `rosrun uav_arm_top eso_offboard_node`
-- `rosrun uav_arm_top eso_offboard_2_5_node`
-- `rosrun uav_arm_top eso_square_offboard_node`
-- `rosrun uav_arm_top eso_circle_offboard_node`
-
-#### 机械臂脚本
-
-- `rosrun arm_controller joint_position_commander.py`
-- `rosrun arm_controller joint_position_commander_uam_v5.py`
-- `rosrun arm_controller arm_zero_hold_logger_uam_v5.py`
-
-### 5. 端到端数据链
-
-`uav_arm_v4` 的主链路如下：
-
-1. Gazebo 加载 `uav_arm_v4.sdf`。
-2. ROS launch 加载 `uav_arm_v4.urdf.xacro` 给 ros_control 使用。
-3. Offboard demo 节点通过 MAVROS 下发设定值。
-4. PX4 的 `10021_uav_arm_v4` airframe 激活 ESO 控制栈。
-5. 机械臂 ROS 控制器驱动关节运动。
-6. PX4 的位置环、姿态环、角速度环对机械臂扰动进行补偿。
-
-`uam_v5` 比前者多一条桥接链：
-
-1. ROS 机械臂控制器发布命令并读取 `/uav_arm/joint_states`。
-2. `uam_v5_arm_joint_state_bridge.py` 把关节位置/速度编码成 MAVLink named value。
-3. MAVROS 把这些值送入 PX4 的 `debug_key_value`。
-4. `arm_joint_bridge` 重建出 `arm_joint_states`。
-5. ESO 模块基于这些状态做动态质心和惯量补偿。
-
-### 6. 如何运行或验证
-
-#### 编译 PX4 SITL
+Run Exp4 square trajectory tracking:
 
 ```bash
-cd /home/cf/PX4_Firmware_clean
-make px4_sitl gazebo_uav_arm_v4
-make px4_sitl gazebo_uam_v5
+roslaunch uav_arm_top exp4_square_tracking_uam_v5.launch
 ```
 
-#### 编译 Catkin 工作区
+You can also start only the shared `uam_v5` PX4-SITL + Gazebo + arm-controller bringup:
 
 ```bash
-cd /home/cf/PX4_Firmware_clean/ESO_paper_reproduction
-catkin_make
+roslaunch uav_control arm_pid_SITL_Gazebo_uam_v5.launch
 ```
 
-#### 每个终端先准备环境
+The current comparison dataset is stored in:
 
-```bash
-source /home/cf/PX4_Firmware_clean/ESO_paper_reproduction/src/setup_px4_sitl_ros_env.sh
+```text
+ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/
 ```
 
-#### 启动整套 Demo
+The four MATLAB inputs used by the plotting script are:
 
-```bash
-roslaunch uav_arm_top arm_pid_SITL_Gazebo.launch
-roslaunch uav_arm_top arm_pid_SITL_Gazebo_uam_v5.launch
+```text
+px4_sitl_mode1_paper_eso.mat
+px4_sitl_mode1_px4_pid.mat
+px4_sitl_mode2_paper_eso.mat
+px4_sitl_mode2_px4_pid.mat
 ```
 
-#### 最小检查项
+Regenerate the comparison figures from the existing `.mat` files:
 
-- `rospack find uav_arm_top`
-- `rospack find mavlink_sitl_gazebo`
-- PX4 控制台能看到 `flight_mode_manager`、`eso_pos_control`、`eso_att_control`、`eso_rate_control` 正常运行
-- `uam_v5` 下还能看到 `arm_joint_bridge` 正常运行，且官方 `mc_pos_control`、`mc_att_control`、`mc_rate_control` 未运行
-- 机械臂脚本可以正常发命令，且 namespace 不报错
-- 后处理脚本能读到 bag 或控制台日志
+```matlab
+cd('/home/cf/PX4_Firmware_clean')
+addpath('ESO_paper_reproduction/data/scripts')
 
-### 7. 文件索引
+raw_dir = 'ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944';
+figure_dir = 'ESO_paper_reproduction/data/figure/px4_sitl_comparison_20260513_193944';
 
-- `src/modules/eso_common`：ESO 模块共享模型配置。
-- `src/modules/eso_pos_control`：自定义位置控制器。
-- `src/modules/eso_att_control`：自定义姿态控制器。
-- `src/modules/eso_rate_control`：自定义角速度控制器。
-- `src/modules/arm_joint_bridge`：PX4 侧关节桥接模块。
-- `ROMFS/px4fmu_common/init.d-posix/airframes`：启用自定义控制栈的 airframe。
-- `Tools/sitl_gazebo/models/uav_arm_v4`：`uav_arm_v4` 的 Gazebo 模型。
-- `Tools/sitl_gazebo/models/uam_v5`：`uam_v5` 的 Gazebo 模型。
-- `ESO_paper_reproduction/src/uav_arm_model`：两套平台的 ROS 模型包。
-- `ESO_paper_reproduction/src/arm_controller`：机械臂控制与测试脚本。
-- `ESO_paper_reproduction/src/uav_arm_top`：顶层 demo 与 launch。
-- `ESO_paper_reproduction/src/uav_control`：ROS 侧工具和分析包。
+plot_px4_pid_comparison( ...
+    fullfile(raw_dir, 'px4_sitl_mode1_paper_eso.mat'), ...
+    fullfile(raw_dir, 'px4_sitl_mode2_paper_eso.mat'), ...
+    fullfile(raw_dir, 'px4_sitl_mode1_px4_pid.mat'), ...
+    fullfile(raw_dir, 'px4_sitl_mode2_px4_pid.mat'), ...
+    figure_dir)
+```
+
+The command writes position tracking plots, 3D trajectory and mean-error plots, arm tracking plots, and `px4_pid_metrics_summary.txt` under `figure_dir`.
+
+## 4. Validation Scenarios
+
+The values below come from:
+
+```text
+ESO_paper_reproduction/data/figure/px4_sitl_comparison_20260513_193944/px4_pid_comparison/px4_pid_metrics_summary.txt
+```
+
+All position metrics are in meters. Arm errors are in radians. `Diverged = 0` means the run did not diverge.
+
+### Exp1: Hover Disturbance Rejection
+
+`exp1_hover_disturbance_uam_v5` validates hover accuracy when periodic manipulator motion injects coupled disturbances. The vehicle enters Offboard mode, tracks a fixed hover setpoint, and then enables arm motion after the altitude and position trigger conditions are satisfied.
+
+| Controller | Axis mean position error `[x y z]` | 3-axis mean position error | Axis max position error `[x y z]` | Position RMSE | Max position error | Arm axis max error `[q1 q2 q3]` | Diverged |
+| --- | --- | ---: | --- | ---: | ---: | --- | ---: |
+| Paper ESO | `[0.009243 0.021049 0.019118]` | `0.033942` | `[0.035557 0.084183 0.059154]` | `0.037152` | `0.085860` | `[0.034400 0.048658 0.012865]` | `0` |
+| PX4-PID | `[0.007517 0.019445 0.030771]` | `0.040629` | `[0.024049 0.071301 0.085212]` | `0.044450` | `0.087450` | `[0.037056 0.064329 0.012954]` | `0` |
+
+Data files:
+
+```text
+ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_paper_eso.*
+ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_px4_pid.*
+```
+
+Figures:
+
+![Exp1 position tracking and position error](ESO_paper_reproduction/data/figure/px4_sitl_comparison_20260513_193944/px4_pid_comparison/mode1_position_tracking_and_error_eso_vs_px4_pid.png)
+
+![Exp1 3D trajectory and mean position error](ESO_paper_reproduction/data/figure/px4_sitl_comparison_20260513_193944/px4_pid_comparison/mode1_3d_mean_error_eso_vs_px4_pid.png)
+
+![Exp1 arm tracking error](ESO_paper_reproduction/data/figure/px4_sitl_comparison_20260513_193944/px4_pid_comparison/mode1_arm_tracking_eso_vs_px4_pid.png)
+
+### Exp4: Square Trajectory Tracking
+
+`exp4_square_tracking_uam_v5` validates trajectory tracking accuracy under the same periodic manipulator motion. The scenario adds horizontal square tracking, velocity feed-forward, and corner hold phases, making it a combined test of motion tracking and disturbance rejection.
+
+| Controller | Axis mean position error `[x y z]` | 3-axis mean position error | Axis max position error `[x y z]` | Position RMSE | Max position error | Arm axis max error `[q1 q2 q3]` | Diverged |
+| --- | --- | ---: | --- | ---: | ---: | --- | ---: |
+| Paper ESO | `[0.019409 0.021160 0.018729]` | `0.038820` | `[0.082250 0.088785 0.056971]` | `0.041388` | `0.092817` | `[0.034137 0.046554 0.012891]` | `0` |
+| PX4-PID | `[0.020426 0.020910 0.018955]` | `0.039301` | `[0.066856 0.085130 0.063215]` | `0.041722` | `0.087831` | `[0.033233 0.044413 0.012906]` | `0` |
+
+Data files:
+
+```text
+ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_paper_eso.*
+ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_px4_pid.*
+```
+
+Figures:
+
+![Exp4 position tracking and position error](ESO_paper_reproduction/data/figure/px4_sitl_comparison_20260513_193944/px4_pid_comparison/mode2_position_tracking_and_error_eso_vs_px4_pid.png)
+
+![Exp4 3D trajectory and mean position error](ESO_paper_reproduction/data/figure/px4_sitl_comparison_20260513_193944/px4_pid_comparison/mode2_3d_mean_error_eso_vs_px4_pid.png)
+
+![Exp4 arm tracking error](ESO_paper_reproduction/data/figure/px4_sitl_comparison_20260513_193944/px4_pid_comparison/mode2_arm_tracking_eso_vs_px4_pid.png)
+
+Gazebo and PX4-SITL simulate a closed-loop runtime environment with real-time scheduling, sensors, MAVROS communication, Gazebo physics integration, and PX4 controller execution. Even when parameters and launch commands are unchanged, rerun bags, MATLAB files, and metrics can differ at the millimeter level. Figures and tables should therefore be interpreted within the same generated dataset.

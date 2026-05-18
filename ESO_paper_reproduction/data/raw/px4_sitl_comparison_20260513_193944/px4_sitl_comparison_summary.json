@@ -1,0 +1,250 @@
+{
+  "runs": [
+    {
+      "stack": "px4_pid",
+      "mode": "mode1",
+      "experiment": "exp1_hover_disturbance_uam_v5",
+      "run_root": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/fresh_runs/20260513_193944/px4_pid_mode1_exp1_hover_disturbance_uam_v5",
+      "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_px4_pid.bag",
+      "metadata": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_px4_pid_metadata.json",
+      "params": {},
+      "mat": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_px4_pid.mat",
+      "summary": {
+        "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_px4_pid.bag",
+        "arm_start_ros_time_s": 25.892,
+        "samples": 1800,
+        "crop_start_s": 0.0,
+        "crop_end_s": 59.98400000000001,
+        "position_axis_mean": [
+          0.007516929002934679,
+          0.019444821703483387,
+          0.030771185954411823
+        ],
+        "position_axis_max": [
+          0.024048836901783943,
+          0.07130100578069687,
+          0.08521151542663574
+        ],
+        "position_rms": 0.044450240165412165,
+        "position_max": 0.08745014378163923,
+        "arm_axis_max": [
+          0.03705585693952161,
+          0.06432904930790481,
+          0.012954381300022227
+        ],
+        "is_divergent": false
+      }
+    },
+    {
+      "stack": "paper_eso",
+      "mode": "mode1",
+      "experiment": "exp1_hover_disturbance_uam_v5",
+      "run_root": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/fresh_runs/20260513_193944/paper_eso_mode1_exp1_hover_disturbance_uam_v5",
+      "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_paper_eso.bag",
+      "metadata": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_paper_eso_metadata.json",
+      "params": {},
+      "mat": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_paper_eso.mat",
+      "summary": {
+        "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_paper_eso.bag",
+        "arm_start_ros_time_s": 68.508,
+        "samples": 1800,
+        "crop_start_s": 0.0,
+        "crop_end_s": 59.988000000000014,
+        "position_axis_mean": [
+          0.009242775681552505,
+          0.021049355561824794,
+          0.019117988811598884
+        ],
+        "position_axis_max": [
+          0.03555677458643913,
+          0.08418294042348862,
+          0.05915403366088867
+        ],
+        "position_rms": 0.037151721591291674,
+        "position_max": 0.0858602166086347,
+        "arm_axis_max": [
+          0.0344001101159022,
+          0.048658183825239544,
+          0.012864621242951048
+        ],
+        "is_divergent": false
+      }
+    },
+    {
+      "stack": "px4_pid",
+      "mode": "mode2",
+      "experiment": "exp4_square_tracking_uam_v5",
+      "run_root": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/fresh_runs/20260513_193944/px4_pid_mode2_exp4_square_tracking_uam_v5",
+      "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_px4_pid.bag",
+      "metadata": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_px4_pid_metadata.json",
+      "params": {},
+      "mat": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_px4_pid.mat",
+      "summary": {
+        "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_px4_pid.bag",
+        "arm_start_ros_time_s": 71.024,
+        "samples": 2859,
+        "crop_start_s": 0.0,
+        "crop_end_s": 95.28800000000001,
+        "position_axis_mean": [
+          0.020425780720497624,
+          0.020909778749872286,
+          0.018954575332823062
+        ],
+        "position_axis_max": [
+          0.0668564329604844,
+          0.08513024417572823,
+          0.06321477890014648
+        ],
+        "position_rms": 0.041722365273209196,
+        "position_max": 0.08783054638791933,
+        "arm_axis_max": [
+          0.033232527615864954,
+          0.04441331965864665,
+          0.012905938690816481
+        ],
+        "is_divergent": false
+      }
+    },
+    {
+      "stack": "paper_eso",
+      "mode": "mode2",
+      "experiment": "exp4_square_tracking_uam_v5",
+      "run_root": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/fresh_runs/20260513_193944/paper_eso_mode2_exp4_square_tracking_uam_v5",
+      "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_paper_eso.bag",
+      "metadata": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_paper_eso_metadata.json",
+      "params": {},
+      "mat": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_paper_eso.mat",
+      "summary": {
+        "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_paper_eso.bag",
+        "arm_start_ros_time_s": 70.84,
+        "samples": 2860,
+        "crop_start_s": 0.0,
+        "crop_end_s": 95.304,
+        "position_axis_mean": [
+          0.01940892727066573,
+          0.021159706287287788,
+          0.018728674125004483
+        ],
+        "position_axis_max": [
+          0.08225046047008222,
+          0.08878452163619843,
+          0.056970834732055664
+        ],
+        "position_rms": 0.04138834121510118,
+        "position_max": 0.09281699168448414,
+        "arm_axis_max": [
+          0.03413703054950895,
+          0.04655439972136451,
+          0.012890986411076343
+        ],
+        "is_divergent": false
+      }
+    }
+  ],
+  "report": {
+    "mode1": {
+      "px4_pid": {
+        "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_px4_pid.bag",
+        "arm_start_ros_time_s": 25.892,
+        "samples": 1800,
+        "crop_start_s": 0.0,
+        "crop_end_s": 59.98400000000001,
+        "position_axis_mean": [
+          0.007516929002934679,
+          0.019444821703483387,
+          0.030771185954411823
+        ],
+        "position_axis_max": [
+          0.024048836901783943,
+          0.07130100578069687,
+          0.08521151542663574
+        ],
+        "position_rms": 0.044450240165412165,
+        "position_max": 0.08745014378163923,
+        "arm_axis_max": [
+          0.03705585693952161,
+          0.06432904930790481,
+          0.012954381300022227
+        ],
+        "is_divergent": false
+      },
+      "paper_eso": {
+        "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode1_paper_eso.bag",
+        "arm_start_ros_time_s": 68.508,
+        "samples": 1800,
+        "crop_start_s": 0.0,
+        "crop_end_s": 59.988000000000014,
+        "position_axis_mean": [
+          0.009242775681552505,
+          0.021049355561824794,
+          0.019117988811598884
+        ],
+        "position_axis_max": [
+          0.03555677458643913,
+          0.08418294042348862,
+          0.05915403366088867
+        ],
+        "position_rms": 0.037151721591291674,
+        "position_max": 0.0858602166086347,
+        "arm_axis_max": [
+          0.0344001101159022,
+          0.048658183825239544,
+          0.012864621242951048
+        ],
+        "is_divergent": false
+      }
+    },
+    "mode2": {
+      "px4_pid": {
+        "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_px4_pid.bag",
+        "arm_start_ros_time_s": 71.024,
+        "samples": 2859,
+        "crop_start_s": 0.0,
+        "crop_end_s": 95.28800000000001,
+        "position_axis_mean": [
+          0.020425780720497624,
+          0.020909778749872286,
+          0.018954575332823062
+        ],
+        "position_axis_max": [
+          0.0668564329604844,
+          0.08513024417572823,
+          0.06321477890014648
+        ],
+        "position_rms": 0.041722365273209196,
+        "position_max": 0.08783054638791933,
+        "arm_axis_max": [
+          0.033232527615864954,
+          0.04441331965864665,
+          0.012905938690816481
+        ],
+        "is_divergent": false
+      },
+      "paper_eso": {
+        "bag": "/home/cf/PX4_Firmware_clean/ESO_paper_reproduction/data/raw/px4_sitl_comparison_20260513_193944/px4_sitl_mode2_paper_eso.bag",
+        "arm_start_ros_time_s": 70.84,
+        "samples": 2860,
+        "crop_start_s": 0.0,
+        "crop_end_s": 95.304,
+        "position_axis_mean": [
+          0.01940892727066573,
+          0.021159706287287788,
+          0.018728674125004483
+        ],
+        "position_axis_max": [
+          0.08225046047008222,
+          0.08878452163619843,
+          0.056970834732055664
+        ],
+        "position_rms": 0.04138834121510118,
+        "position_max": 0.09281699168448414,
+        "arm_axis_max": [
+          0.03413703054950895,
+          0.04655439972136451,
+          0.012890986411076343
+        ],
+        "is_divergent": false
+      }
+    }
+  }
+}
