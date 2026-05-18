@@ -203,3 +203,5 @@ Figures:
 ![Exp4 arm tracking error](ESO_paper_reproduction/data/figure/px4_sitl_comparison_20260513_193944/px4_pid_comparison/mode2_arm_tracking_eso_vs_px4_pid.png)
 
 Gazebo and PX4-SITL simulate a closed-loop runtime environment with real-time scheduling, sensors, MAVROS communication, Gazebo physics integration, and PX4 controller execution. Even when parameters and launch commands are unchanged, rerun bags, MATLAB files, and metrics can differ at the millimeter level. Figures and tables should therefore be interpreted within the same generated dataset.
+
+The model files are not open-sourced at this time..
