@@ -55,7 +55,7 @@ data.position_error_norm = vecnorm(data.p_error, 2, 2);
 function plot_mode_pair(eso, px4, output_dir, mode_label, experiment_title)
 position_labels = {'p_x / m', 'p_y / m', 'p_z / m'};
 position_error_labels = {'e_x / mm', 'e_y / mm', 'e_z / mm'};
-joint_error_labels = {'e_{q1} / rad', 'e_{q2} / rad', 'e_{q3} / rad'};
+    joint_labels = {'q_1 / rad', 'q_2 / rad', 'q_3 / rad'};
 time_label = 't / s';
 
 style = struct();
@@ -115,8 +115,8 @@ lgd = legend(track_handles, {legend_text('本文算法', false, style), ...
 lgd.Layout.Tile = 'north';
 save_figure(fig, output_dir, sprintf('%s_position_tracking_and_error_eso_vs_px4_pid.png', mode_label));
 
-fig = figure('Visible', 'off', 'Color', 'w', 'Position', [100 100 1560 720]);
-layout = tiledlayout(fig, 1, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+fig = figure('Visible', 'off', 'Color', 'w', 'Position', [100 100 1720 720]);
+layout = tiledlayout(fig, 1, 2, 'TileSpacing', 'loose', 'Padding', 'loose');
 ax_traj = nexttile(layout, 1);
 h_traj(1) = plot3(ax_traj, eso.p_true(:,1), eso.p_true(:,2), eso.p_true(:,3), 'b-', ...
     'LineWidth', style.main_line_width); hold(ax_traj, 'on');
@@ -137,8 +137,12 @@ zlabel(ax_traj, 'p_z / m', 'FontSize', style.label_font_size, ...
     'FontWeight', style.label_font_weight, 'FontName', style.english_font_name);
 z_limits = [min([eso.p_true(:,3); px4.p_true(:,3); eso.p_desired(:,3)]), ...
     max([eso.p_true(:,3); px4.p_true(:,3); eso.p_desired(:,3)])];
-zlim(ax_traj, z_limits + [-1 1] * max(0.001, 0.08 * diff(z_limits)));
-zticks(ax_traj, linspace(z_limits(1), z_limits(2), 4));
+zlim(ax_traj, z_limits + [-1 1] * max(0.001, 0.12 * diff(z_limits)));
+zticks(ax_traj, [z_limits(1), z_limits(2)]);
+ztickformat(ax_traj, '%.2f');
+ax_traj.ZAxis.FontSize = max(style.axis_font_size - 2, 10);
+view(ax_traj, [-138 22]);
+pbaspect(ax_traj, [1.35 1.35 0.32]);
 
 ax_norm = nexttile(layout, 2);
 h_norm(1) = plot(ax_norm, eso.t, position_error_norm_mm_eso, 'b-', ...
@@ -166,12 +170,12 @@ layout = tiledlayout(fig, 3, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
 joint_handles = gobjects(1, 2);
 for i = 1:3
     ax_joint = nexttile(layout, i);
-    joint_handles(1) = plot(ax_joint, eso.t, eso.q_error(:, i), 'b-', ...
+    joint_handles(1) = plot(ax_joint, eso.t, eso.q_true(:, i), 'b-', ...
         'LineWidth', style.main_line_width); hold(ax_joint, 'on');
-    joint_handles(2) = plot(ax_joint, px4.t, px4.q_error(:, i), ...
+    joint_handles(2) = plot(ax_joint, px4.t, px4.q_true(:, i), ...
         'Color', [0.85 0.33 0.10], 'LineWidth', style.main_line_width);
-    configure_2d_axes(ax_joint, joint_error_labels{i}, i == 3, time_label, style);
-    apply_data_ylim(ax_joint, [eso.q_error(:, i); px4.q_error(:, i)], ...
+    configure_2d_axes(ax_joint, joint_labels{i}, i == 3, time_label, style);
+    apply_data_ylim(ax_joint, [eso.q_true(:, i); px4.q_true(:, i)], ...
         style.y_padding_ratio, style.min_span_joint_rad);
 end
 lgd = legend(joint_handles, {legend_text('本文算法', false, style), ...
