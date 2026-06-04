@@ -182,6 +182,10 @@ Figures:
 
 `exp4_square_tracking_uam_v5` validates trajectory tracking accuracy under the same periodic manipulator motion. The scenario adds horizontal square tracking, velocity feed-forward, and corner hold phases, making it a combined test of motion tracking and disturbance rejection.
 
+Gazebo visualization:
+
+![Exp4 Gazebo square trajectory tracking visualization](docs/media/exp4_square_trajectory_tracking.gif)
+
 | Controller | Axis mean position error `[x y z]` | 3-axis mean position error | Axis max position error `[x y z]` | Position RMSE | Max position error | Arm axis max error `[q1 q2 q3]` | Diverged |
 | --- | --- | ---: | --- | ---: | ---: | --- | ---: |
 | Paper ESO | `[0.019409 0.021160 0.018729]` | `0.038820` | `[0.082250 0.088785 0.056971]` | `0.041388` | `0.092817` | `[0.034137 0.046554 0.012891]` | `0` |
