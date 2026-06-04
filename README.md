@@ -158,6 +158,10 @@ All position metrics are in meters. Arm errors are in radians. `Diverged = 0` me
 
 `exp1_hover_disturbance_uam_v5` validates hover accuracy when periodic manipulator motion injects coupled disturbances. The vehicle enters Offboard mode, tracks a fixed hover setpoint, and then enables arm motion after the altitude and position trigger conditions are satisfied.
 
+Gazebo visualization:
+
+![Exp1 Gazebo hover disturbance rejection visualization](docs/media/exp1_hover_disturbance_rejection.gif)
+
 | Controller | Axis mean position error `[x y z]` | 3-axis mean position error | Axis max position error `[x y z]` | Position RMSE | Max position error | Arm axis max error `[q1 q2 q3]` | Diverged |
 | --- | --- | ---: | --- | ---: | ---: | --- | ---: |
 | Paper ESO | `[0.009243 0.021049 0.019118]` | `0.033942` | `[0.035557 0.084183 0.059154]` | `0.037152` | `0.085860` | `[0.034400 0.048658 0.012865]` | `0` |
